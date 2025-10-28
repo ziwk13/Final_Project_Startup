@@ -63,7 +63,7 @@ export default function JWTLogin({ ...others }) {
         username: Yup.string().max(255).required('아이디는 필수입니다.'),
         password: Yup.string()
           .required('비밀번호는 필수입니다.')
-          .test('no-leading-trailing-whitespace', 'Password can not start or end with spaces', (value) => value === value.trim())
+          .test('no-leading-trailing-whitespace', '비밀번호는 공백으로 시작하거나 끝날 수 없습니다.', (value) => value === value.trim())
           .max(20, '비밀번호는 20자 이하여야합니다.')
       })}
       onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
