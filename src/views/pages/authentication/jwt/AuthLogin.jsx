@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 // material-ui
 import Button from '@mui/material/Button';
@@ -11,7 +11,6 @@ import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import InputLabel from '@mui/material/InputLabel';
 import OutlinedInput from '@mui/material/OutlinedInput';
-import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
 // third party
@@ -34,7 +33,11 @@ export default function JWTLogin({ ...others }) {
   const { login, isLoggedIn } = useAuth();
   const scriptedRef = useScriptRef();
 
-  const [checked, setChecked] = useState(true);
+  // localStorage에서 'rememberedUsername' 키로 저장된 사용자 이름 가져오기
+  const rememberedUsername = localStorage.getItem('rememberedUsername');
+
+  // 저장된 사용자 이름이 있으면(null이나 undefined가 아니면) true, 없으면 false
+  const [checked, setChecked] = useState(!!rememberedUsername);
 
   const [showPassword, setShowPassword] = useState(false);
   const handleClickShowPassword = () => {
@@ -51,7 +54,7 @@ export default function JWTLogin({ ...others }) {
   return (
     <Formik
       initialValues={{
-        username: 'newuser',
+        username: rememberedUsername || 'newuser',
         password: 'newuser',
         submit: null
       }}
@@ -59,11 +62,20 @@ export default function JWTLogin({ ...others }) {
         username: Yup.string().max(255).required('아이디는 필수입니다.'),
         password: Yup.string()
           .required('비밀번호는 필수입니다.')
-          .test('no-leading-trailing-whitespace', 'Password can not start or end with spaces', (value) => value === value.trim())
-          .max(10, 'Password must be less than 10 characters')
+          .test('no-leading-trailing-whitespace', '비밀번호는 공백으로 시작하거나 끝날 수 없습니다.', (value) => value === value.trim())
+          .max(20, '비밀번호는 20자 이하여야합니다.')
       })}
       onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
         try {
+          // 아이디 기억하기 체크 여부에 따라 localStorage 처리
+          if (checked) {
+            // 체크되어 있으면 localStorage에 사용자 이름 저장
+            localStorage.setItem('rememberedUsername', values.username.trim());
+          } else {
+            // 체크되어 있지 않으면 localStorage에서 사용자 이름 제거
+            localStorage.removeItem('rememberedUsername');
+          }
+
           await login?.(values.username.trim(), values.password);
 
           if (scriptedRef.current) {
@@ -72,11 +84,9 @@ export default function JWTLogin({ ...others }) {
           }
         } catch (err) {
           console.error(err);
-          if (scriptedRef.current) {
-            setStatus({ success: false });
-            setErrors({ submit: err.message });
-            setSubmitting(false);
-          }
+          setStatus({ success: false });
+          setErrors({ submit: err.message });
+          setSubmitting(false);
         }
       }}
     >
@@ -136,20 +146,22 @@ export default function JWTLogin({ ...others }) {
                 control={
                   <Checkbox checked={checked} onChange={(event) => setChecked(event.target.checked)} name="checked" color="primary" />
                 }
-                label="Keep me logged in"
+                label="아이디 기억하기"
               />
             </Grid>
           </Grid>
 
           {errors.submit && (
-            <Box sx={{ mt: 3 }}>
-              <FormHelperText error>{errors.submit}</FormHelperText>
+            <Box sx={{ mt: 1 }}>
+              <FormHelperText error sx={{ fontSize: '15px' }}>
+                {errors.submit}
+              </FormHelperText>
             </Box>
           )}
           <Box sx={{ mt: 2 }}>
             <AnimateButton>
               <Button color="secondary" disabled={isSubmitting} fullWidth size="large" type="submit" variant="contained">
-               로그인
+                로그인
               </Button>
             </AnimateButton>
           </Box>
