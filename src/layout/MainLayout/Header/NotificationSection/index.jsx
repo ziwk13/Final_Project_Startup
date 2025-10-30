@@ -132,39 +132,19 @@ export default function NotificationSection() {
                     <Stack sx={{ gap: 2 }}>
                       <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', pt: 2, px: 2 }}>
                         <Stack direction="row" sx={{ gap: 2 }}>
-                          <Typography variant="subtitle1">All Notification</Typography>
+                          <Typography variant="subtitle1">모든 알림</Typography>
                           <Chip size="small" label="01" variant="filled" sx={{ color: 'background.default', bgcolor: 'warning.dark' }} />
                         </Stack>
                         <Typography component={Link} to="#" variant="subtitle2" sx={{ color: 'primary.main' }}>
-                          Mark as all read
+                          전체 알림 읽음
                         </Typography>
                       </Stack>
                       <Box sx={{ height: 1, maxHeight: 'calc(100vh - 205px)', overflowX: 'hidden', '&::-webkit-scrollbar': { width: 5 } }}>
-                        <Box sx={{ px: 2, pt: 0.25 }}>
-                          <TextField
-                            id="outlined-select-currency-native"
-                            select
-                            fullWidth
-                            value={value}
-                            onChange={handleChange}
-                            slotProps={{ select: { native: true } }}
-                          >
-                            {status.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </TextField>
-                        </Box>
+
                         <Divider sx={{ mt: 2 }} />
                         <NotificationList />
                       </Box>
                     </Stack>
-                    <CardActions sx={{ p: 1.25, justifyContent: 'center' }}>
-                      <Button size="small" disableElevation>
-                        View All
-                      </Button>
-                    </CardActions>
                   </MainCard>
                 )}
               </Paper>

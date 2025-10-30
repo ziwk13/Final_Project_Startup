@@ -19,7 +19,9 @@ import { withAlpha } from 'utils/colorUtils';
 
 // assets
 import { IconBrandTelegram, IconBuildingStore, IconMailbox, IconPhoto } from '@tabler/icons-react';
-import User1 from 'assets/images/users/user-round.svg';
+import User1 from 'assets/images/users/avatar-4.png';
+import User2 from 'assets/images/users/logo_coupang.png'
+import User3 from 'assets/images/users/animal6.jpg'
 
 function ListItemWrapper({ children }) {
   const theme = useTheme();
@@ -56,30 +58,31 @@ export default function NotificationList() {
           disablePadding
           secondaryAction={
             <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'flex-end' }}>
-              <Typography variant="caption">2 min ago</Typography>
+              <Typography variant="caption">2분전</Typography>
             </Stack>
           }
         >
           <ListItemAvatar>
-            <Avatar alt="John Doe" src={User1} />
+            <Avatar alt="권형택" src={User1} />
           </ListItemAvatar>
-          <ListItemText primary="John Doe" />
+          <ListItemText primary="권형택" />
         </ListItem>
         <Stack sx={containerSX}>
-          <Typography variant="subtitle2">It is a long established fact that a reader will be distracted</Typography>
+          <Typography variant="subtitle2">알림 content</Typography>
           <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
-            <Chip label="Unread" color="error" size="small" sx={{ width: 'min-content' }} />
-            <Chip label="New" color="warning" size="small" sx={{ width: 'min-content' }} />
+            <Chip label="안읽음" color="error" size="small" sx={{ width: 'min-content' }} />
+            <Chip label="새 알림" color="warning" size="small" sx={{ width: 'min-content' }} />
           </Stack>
         </Stack>
       </ListItemWrapper>
+      {/* 2번째 알림 */}
       <ListItemWrapper>
         <ListItem
           alignItems="center"
           disablePadding
           secondaryAction={
             <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'flex-end' }}>
-              <Typography variant="caption">2 min ago</Typography>
+              <Typography variant="caption">2분전</Typography>
             </Stack>
           }
         >
@@ -95,11 +98,11 @@ export default function NotificationList() {
               <IconBuildingStore stroke={1.5} size="20px" />
             </Avatar>
           </ListItemAvatar>
-          <ListItemText primary={<Typography variant="subtitle1">Store Verification Done</Typography>} />
+          <ListItemText primary={<Typography variant="subtitle1">게시판 알림</Typography>} />
         </ListItem>
         <Stack sx={containerSX}>
-          <Typography variant="subtitle2">We have successfully received your request.</Typography>
-          <Chip label="Unread" color="error" size="small" sx={{ width: 'min-content' }} />
+          <Typography variant="subtitle2">새로운 공지사항이 있습니다</Typography>
+          <Chip label="안읽음" color="error" size="small" sx={{ width: 'min-content' }} />
         </Stack>
       </ListItemWrapper>
       <ListItemWrapper>
@@ -108,7 +111,7 @@ export default function NotificationList() {
           disablePadding
           secondaryAction={
             <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'flex-end' }}>
-              <Typography variant="caption">2 min ago</Typography>
+              <Typography variant="caption">2 분전</Typography>
             </Stack>
           }
         >
@@ -123,15 +126,16 @@ export default function NotificationList() {
               <IconMailbox stroke={1.5} size="20px" />
             </Avatar>
           </ListItemAvatar>
-          <ListItemText primary={<Typography variant="subtitle1">Check Your Mail.</Typography>} />
+          <ListItemText primary={<Typography variant="subtitle1">메일이 도착 하였습니다.</Typography>} />
         </ListItem>
         <Stack sx={containerSX}>
-          <Typography variant="subtitle2">All done! Now check your inbox as you&apos;re in for a sweet treat!</Typography>
+          <Typography variant="subtitle2">프로젝트 진행 사항 전달 드립니다</Typography>
           <Button variant="contained" endIcon={<IconBrandTelegram stroke={1.5} size={20} />} sx={{ width: 'min-content' }}>
             Mail
           </Button>
         </Stack>
       </ListItemWrapper>
+
       <ListItemWrapper>
         <ListItem
           alignItems="center"
@@ -143,43 +147,12 @@ export default function NotificationList() {
           }
         >
           <ListItemAvatar>
-            <Avatar alt="John Doe" src={User1} />
+            <Avatar alt="김경진" src={User3} />
           </ListItemAvatar>
-          <ListItemText primary={<Typography variant="subtitle1">John Doe</Typography>} />
+          <ListItemText primary={<Typography variant="subtitle1">김경진 </Typography>} />
         </ListItem>
         <Stack sx={containerSX}>
-          <Typography component="span" variant="subtitle2">
-            Uploaded two file on &nbsp;
-            <Typography component="span" variant="h6">
-              21 Jan 2020
-            </Typography>
-          </Typography>
-          <Card sx={{ bgcolor: 'secondary.light', ...theme.applyStyles('dark', { bgcolor: 'dark.main' }) }}>
-            <Stack direction="row" sx={{ p: 2.5, gap: 2 }}>
-              <IconPhoto stroke={1.5} size="20px" />
-              <Typography variant="subtitle1">demo.jpg</Typography>
-            </Stack>
-          </Card>
-        </Stack>
-      </ListItemWrapper>
-      <ListItemWrapper>
-        <ListItem
-          alignItems="center"
-          disablePadding
-          secondaryAction={
-            <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'flex-end' }}>
-              <Typography variant="caption">2 min ago</Typography>
-            </Stack>
-          }
-        >
-          <ListItemAvatar>
-            <Avatar alt="John Doe" src={User1} />
-          </ListItemAvatar>
-          <ListItemText primary={<Typography variant="subtitle1">John Doe</Typography>} />
-        </ListItem>
-        <Stack sx={containerSX}>
-          <Typography variant="subtitle2">It is a long established fact that a reader will be distracted</Typography>
-          <Chip label="Confirmation of Account." color="success" size="small" sx={{ width: 'min-content' }} />
+          <Typography variant="subtitle2">족발은 언제 올까요</Typography>
         </Stack>
       </ListItemWrapper>
     </List>
