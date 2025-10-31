@@ -7,7 +7,8 @@ import AuthGuard from 'utils/route-guard/AuthGuard';
 
 // sample page routing
 const SamplePage = Loadable(lazy(() => import('views/sample-page')));
-const AddApproval = Loadable(lazy(() => import('approval/pages')));
+const AddApprovalPage = Loadable(lazy(() => import('approval/pages/AddApprovalPage')));
+const ApprovalListPage = Loadable(lazy(() => import('approval/pages/ApprovalListPage')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -28,10 +29,10 @@ const MainRoutes = {
       children: [
         {
           path: 'form',
-          element: <AddApproval />
+          element: <AddApprovalPage />
         },{
-          path: 'list',
-          // element: <ApprovalList />
+          path: 'list/:status',
+          element: <ApprovalListPage />
         },{
           path: 'detail',
           // element: <ApprovalDetail />

@@ -157,25 +157,25 @@ const pages = {
           id: 'approval-list-pending',
           title: '결재 대기 목록',
           type: 'item',
-          url: '/approval/list?status=pending',
+          url: '/approval/list/pending',
           target: false
         },{
           id: 'approval-list-draft',
           title: '결재 기안 목록',
           type: 'item',
-          url: '/approval/list?status=draft',
+          url: '/approval/list/draft',
           target: false
         },{
           id: 'approval-list-completed',
           title: '결재 완료 목록',
           type: 'item',
-          url: '/approval/list?status=completed',
+          url: '/approval/list/completed',
           target: false
         },{
           id: 'approval-list-reference',
           title: '결재 참조 목록',
           type: 'item',
-          url: '/approval/list?status=reference',
+          url: '/approval/list/reference',
           target: false
         },
 
