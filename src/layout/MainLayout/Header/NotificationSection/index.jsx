@@ -20,7 +20,7 @@ import Box from '@mui/material/Box';
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
 import Transitions from 'ui-component/extended/Transitions';
-import NotificationList from './NotificationList';
+import NotificationList from './components/NotificationList';
 
 // assets
 import { IconBell } from '@tabler/icons-react';
