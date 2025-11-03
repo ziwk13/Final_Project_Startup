@@ -1,0 +1,72 @@
+// third party
+import { createSlice } from '@reduxjs/toolkit';
+import axios from 'utils/axios';
+import { dispatch } from 'store';
+
+const initialState = {
+  error: null,
+  events: []
+};
+
+const slice = createSlice({
+  name: 'schedule',
+  initialState,
+  reducers: {
+    hasError(state, action) {
+      state.error = action.payload;
+    },
+    getEventsSuccess(state, action) {
+      state.events = action.payload;
+    },
+    addEventSuccess(state, action) {
+      state.events.push(action.payload);
+    },
+    updateEventSuccess(state, action) {
+      const updated = action.payload;
+      state.events = state.events.map((e) => (e.scheduleId === updated.scheduleId ? { ...e, ...updated } : e));
+    },
+    removeEventSuccess(state, action) {
+      state.events = state.events.filter((e) => e.scheduleId !== action.payload);
+    }
+  }
+});
+
+export default slice.reducer;
+
+// ==============================|| ACTIONS ||============================== //
+
+export const getEvents = (employeeId) => async () => {
+  try {
+    const response = await axios.get(`/api/schedules/employee/${employeeId}`);
+    dispatch(slice.actions.getEventsSuccess(response.data.data));
+  } catch (error) {
+    dispatch(slice.actions.hasError(error));
+  }
+};
+
+export const addEvent = (eventData) => async () => {
+  try {
+    const response = await axios.post('/api/schedules', eventData);
+    dispatch(slice.actions.addEventSuccess(response.data.data));
+  } catch (error) {
+    dispatch(slice.actions.hasError(error));
+  }
+};
+
+export const updateEvent = (scheduleId, updatedData) => async () => {
+  try {
+    const response = await axios.put(`/api/schedules/${scheduleId}`, updatedData);
+    dispatch(slice.actions.updateEventSuccess(response.data.data));
+  } catch (error) {
+    dispatch(slice.actions.hasError(error));
+  }
+};
+
+export const removeEvent = (scheduleId) => async () => {
+  try {
+    await axios.delete(`/api/schedules/${scheduleId}`);
+    dispatch(slice.actions.removeEventSuccess(scheduleId));
+  } catch (error) {
+    dispatch(slice.actions.hasError(error));
+  }
+};
