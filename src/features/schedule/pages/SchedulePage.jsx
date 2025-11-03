@@ -1,94 +1,76 @@
 import { useEffect, useRef, useState } from 'react';
-
-// material-ui
 import useMediaQuery from '@mui/material/useMediaQuery';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
-
-// third party
 import FullCalendar from '@fullcalendar/react';
 import listPlugin from '@fullcalendar/list';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import timelinePlugin from '@fullcalendar/timeline';
 import interactionPlugin from '@fullcalendar/interaction';
-
-// project imports
 import Toolbar from '../components/Toolbar';
 import AddEventForm from '../components/AddEventForm';
 import CalendarStyled from '../components/CalendarStyled';
 import Loader from 'ui-component/Loader';
 import MainCard from 'ui-component/cards/MainCard';
 import SubCard from 'ui-component/cards/SubCard';
-
 import { dispatch, useSelector } from 'store';
-import { getEvents, addEvent, updateEvent, removeEvent } from '../slices/scheduleSlice'; // ✅ 변경됨
-import useAuth from 'hooks/useAuth';
-
-// assets
+import { getEvents, addEvent, updateEvent, deleteEvent } from '../slices/scheduleSlice';
 import AddAlarmTwoToneIcon from '@mui/icons-material/AddAlarmTwoTone';
+import { format } from 'date-fns';
 
-// ==============================|| APPLICATION CALENDAR ||============================== //
+// 서버(LocalDateTime) 포맷: 타임존 없이 2025-11-03T15:00:00
+const fmtLocal = (d) => (d ? format(new Date(d), "yyyy-MM-dd'T'HH:mm:ss") : null);
 
-export default function Calendar() {
+export default function Calendar({ employeeId }) {
   const calendarRef = useRef(null);
   const matchSm = useMediaQuery((theme) => theme.breakpoints.down('md'));
-  const [loading, setLoading] = useState(true);
+  const { events, loading, error } = useSelector((state) => state.schedule);
 
-  // 로그인 정보
-  const { user } = useAuth();
-  const employeeId = user?.employeeId || user?.id;
-
-  // Redux store에서 event 데이터 가져오기
-  const scheduleState = useSelector((state) => state.schedule || state.schdule || {});
-  const events = scheduleState.events || [];
-
-  // 🧭 일정 조회
-  useEffect(() => {
-    if (employeeId) {
-      dispatch(getEvents(employeeId)).then(() => setLoading(false)); // ✅ getSchedules → getEvents
-    }
-  }, [dispatch, employeeId]);
-
-  // 캘린더 기본 세팅
   const [date, setDate] = useState(new Date());
   const [view, setView] = useState(matchSm ? 'listWeek' : 'dayGridMonth');
-
-  // 모달 관련 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
-  // 📅 Toolbar 핸들러
+  useEffect(() => {
+    dispatch(getEvents());
+  }, []);
+
+  // 날짜/뷰 제어
   const handleDateToday = () => {
-    const calendarEl = calendarRef.current?.getApi();
-    calendarEl?.today();
-    setDate(calendarEl?.getDate() ?? new Date());
+    const api = calendarRef.current?.getApi();
+    api?.today();
+    setDate(api?.getDate() ?? new Date());
   };
 
   const handleViewChange = (newView) => {
-    const calendarEl = calendarRef.current?.getApi();
-    calendarEl?.changeView(newView);
+    const api = calendarRef.current?.getApi();
+    api?.changeView(newView);
     setView(newView);
   };
 
   useEffect(() => {
-    handleViewChange(matchSm ? 'listWeek' : 'dayGridMonth');
+    const api = calendarRef.current?.getApi();
+    const newView = matchSm ? 'listWeek' : 'dayGridMonth';
+    if (api && api.view?.type !== newView) {
+      api.changeView(newView);
+      setView(newView);
+    }
   }, [matchSm]);
 
   const handleDatePrev = () => {
-    const calendarEl = calendarRef.current?.getApi();
-    calendarEl?.prev();
-    setDate(calendarEl?.getDate() ?? new Date());
+    const api = calendarRef.current?.getApi();
+    api?.prev();
+    setDate(api?.getDate() ?? new Date());
   };
-
   const handleDateNext = () => {
-    const calendarEl = calendarRef.current?.getApi();
-    calendarEl?.next();
-    setDate(calendarEl?.getDate() ?? new Date());
+    const api = calendarRef.current?.getApi();
+    api?.next();
+    setDate(api?.getDate() ?? new Date());
   };
 
-  // 📆 일정 선택/추가/수정/삭제 핸들러
+  // 새 범위 선택
   const handleRangeSelect = (arg) => {
     calendarRef.current?.getApi().unselect();
     setSelectedRange({ start: arg.start, end: arg.end });
@@ -96,6 +78,7 @@ export default function Calendar() {
     setIsModalOpen(true);
   };
 
+  // 이벤트 클릭(수정 모달)
   const handleEventSelect = (arg) => {
     const found = events.find((e) => e.scheduleId === Number(arg.event.id));
     setSelectedEvent(found ?? null);
@@ -103,53 +86,60 @@ export default function Calendar() {
     setIsModalOpen(true);
   };
 
-  const handleEventUpdate = ({ event }) => {
-    const updated = {
-      scheduleId: Number(event.id),
-      title: event.title,
-      startTime: event.start ? event.start.toISOString() : undefined,
-      endTime: event.end ? event.end.toISOString() : undefined
-    };
-    dispatch(updateEvent(updated.scheduleId, updated)); // ✅ updateSchedule → updateEvent
+  //  수정(모달 or 드래그/리사이즈)
+  const handleEventUpdate = (argOrId, maybeData) => {
+    let scheduleId;
+    let payload;
+
+    //  case 1: FullCalendar 드래그/리사이즈
+    if (argOrId?.event) {
+      const e = argOrId.event;
+      scheduleId = Number(e.id);
+
+      //  기존 이벤트 데이터 유지 (description 등)
+      const existing = events.find((ev) => ev.scheduleId === scheduleId);
+
+      payload = {
+        ...existing, // content, categoryCode 등 유지
+        title: e.title,
+        startTime: fmtLocal(e.start),
+        endTime: fmtLocal(e.end || e.start)
+      };
+    }
+    // case 2: 모달(EditForm)
+    else {
+      scheduleId = Number(argOrId);
+      payload = {
+        ...maybeData,
+        startTime: fmtLocal(maybeData.startTime),
+        endTime: fmtLocal(maybeData.endTime || maybeData.startTime)
+      };
+    }
+
+    if (!scheduleId || !payload?.startTime) return;
+    dispatch(updateEvent(scheduleId, payload));
+    handleModalClose();
   };
 
-  // ➕ 일정 생성
+  // 생성
   const handleEventCreate = (data) => {
-    const newEvent = {
-      title: data.title,
-      content: data.description || '',
-      categoryCode: data.categoryCode || 'SCH_CATEGORY_MEETING',
-      colorCode: data.colorCode || 'COLOR_BLUE',
-      employeeId,
-      startTime: data.start instanceof Date ? data.start.toISOString() : data.start,
-      endTime: data.end instanceof Date ? data.end.toISOString() : data.end
-    };
-    dispatch(addEvent(newEvent)); // ✅ addSchedule → addEvent
-    handleModalClose();
-  };
-
-  // ✏️ 일정 수정
-  const handleUpdateEvent = (scheduleId, update) => {
     const payload = {
-      scheduleId,
-      ...update,
-      startTime: update.start instanceof Date ? update.start.toISOString() : update.start,
-      endTime: update.end instanceof Date ? update.end.toISOString() : update.end
+      title: data.title,
+      content: data.content,
+      categoryCode: data.categoryCode || 'MEETING',
+      employeeId: employeeId || 1,
+      startTime: fmtLocal(data.startTime),
+      endTime: fmtLocal(data.endTime || data.startTime),
+      isDeleted: false
     };
-    dispatch(updateEvent(scheduleId, payload)); // ✅ updateSchedule → updateEvent
+    dispatch(addEvent(payload));
     handleModalClose();
   };
 
-  // ❌ 일정 삭제
+  // 삭제
   const handleEventDelete = (scheduleId) => {
-    dispatch(removeEvent(scheduleId)); // ✅ removeSchedule → removeEvent
+    dispatch(deleteEvent(scheduleId));
     handleModalClose();
-  };
-
-  const handleAddClick = () => {
-    setSelectedEvent(null);
-    setSelectedRange(null);
-    setIsModalOpen(true);
   };
 
   const handleModalClose = () => {
@@ -159,12 +149,13 @@ export default function Calendar() {
   };
 
   if (loading) return <Loader />;
+  if (error) return <div style={{ padding: 20, color: 'red' }}>❌ 일정 로드 중 오류: {error.message}</div>;
 
   return (
     <MainCard
-      title="일정목록"
+      title="일정 관리"
       secondary={
-        <Button color="secondary" variant="contained" onClick={handleAddClick}>
+        <Button color="secondary" variant="contained" onClick={() => setIsModalOpen(true)}>
           <AddAlarmTwoToneIcon fontSize="small" sx={{ mr: 0.75 }} />
           일정 추가
         </Button>
@@ -179,46 +170,50 @@ export default function Calendar() {
           onClickToday={handleDateToday}
           onChangeView={handleViewChange}
         />
+
         <SubCard>
           <FullCalendar
             ref={calendarRef}
             plugins={[listPlugin, dayGridPlugin, timelinePlugin, timeGridPlugin, interactionPlugin]}
             initialView={view}
             initialDate={date}
+            timeZone="local"
             events={events.map((e) => ({
               id: e.scheduleId,
               title: e.title,
-              start: e.startTime,
-              end: e.endTime,
-              backgroundColor: '#60A5FA'
+              start: new Date(e.startTime),
+              end: new Date(e.endTime),
+              backgroundColor: e.colorCode || '#60A5FA',
+              extendedProps: { content: e.content } // ✅ description 유지용
             }))}
+            eventTimeFormat={{
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false // ✅ 24시간제 표시
+            }}
             selectable
             editable
-            droppable
             weekends
             height={matchSm ? 'auto' : 720}
             headerToolbar={false}
-            allDayMaintainDuration
-            eventResizableFromStart
             select={handleRangeSelect}
             eventDrop={handleEventUpdate}
-            eventClick={handleEventSelect}
             eventResize={handleEventUpdate}
-            eventTimeFormat={{ hour: 'numeric', minute: '2-digit', meridiem: 'short' }}
+            eventClick={handleEventSelect}
           />
         </SubCard>
       </CalendarStyled>
 
-      {/* 일정 등록/수정 다이얼로그 */}
-      <Dialog maxWidth="sm" fullWidth onClose={handleModalClose} open={isModalOpen} slotProps={{ paper: { sx: { p: 0 } } }}>
+      <Dialog maxWidth="sm" fullWidth open={isModalOpen} onClose={handleModalClose} slotProps={{ paper: { sx: { p: 0 } } }}>
         {isModalOpen && (
           <AddEventForm
+            key={selectedEvent?.scheduleId ?? 'new'} // ✅ 새로운 일정이면 완전 새 Form 인스턴스
             event={selectedEvent}
             range={selectedRange}
             onCancel={handleModalClose}
-            handleDelete={handleEventDelete}
             handleCreate={handleEventCreate}
-            handleUpdate={handleUpdateEvent}
+            handleDelete={handleEventDelete}
+            handleUpdate={handleEventUpdate}
           />
         )}
       </Dialog>

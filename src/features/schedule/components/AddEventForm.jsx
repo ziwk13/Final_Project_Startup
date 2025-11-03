@@ -1,213 +1,73 @@
 import PropTypes from 'prop-types';
-// material-ui
-import { useTheme } from '@mui/material/styles';
-import Button from '@mui/material/Button';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import Divider from '@mui/material/Divider';
-import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormHelperText from '@mui/material/FormHelperText';
-import Grid from '@mui/material/Grid';
-import IconButton from '@mui/material/IconButton';
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
-import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
-import TextField from '@mui/material/TextField';
-import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
-
+import {
+  Button,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControlLabel,
+  FormHelperText,
+  Grid as Grid,
+  IconButton,
+  Stack,
+  Switch,
+  TextField,
+  Tooltip
+} from '@mui/material';
 import { LocalizationProvider, MobileDateTimePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-
-// third party
-import * as _ from 'lodash-es';
 import * as Yup from 'yup';
 import { useFormik, Form, FormikProvider } from 'formik';
-
-// project imports
-import ColorPalette from './ColorPalette';
+import { useEffect } from 'react';
 import { gridSpacing } from 'store/constant';
-
-// assets
 import DateRangeIcon from '@mui/icons-material/DateRange';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-// constant
+// ==============================|| ADD / EDIT EVENT FORM ||============================== //
+
+// event / range → 초기값 계산
 function getInitialValues(event, range) {
-  const newEvent = {
-    title: '',
-    description: '',
-    color: '#2196f3',
-    textColor: '',
-    allDay: false,
-    start: range ? new Date(range.start) : new Date(),
-    end: range ? new Date(range.end) : new Date()
+  const now = new Date();
+  const toDate = (v) => (v ? new Date(v) : null);
+
+  return {
+    title: event?.title || '',
+    content: event?.content || '',
+    allDay: event?.allDay || false,
+    startTime: toDate(event?.startTime) || toDate(range?.start) || now,
+    endTime: toDate(event?.endTime) || toDate(range?.end) || now
   };
-
-  if (event || range) {
-    return _.merge({}, newEvent, event);
-  }
-
-  return newEvent;
 }
 
-export default function AddEventFrom({ event, range, handleDelete, handleCreate, handleUpdate, onCancel }) {
-  const theme = useTheme();
+export default function AddEventForm({ event, range, handleDelete, handleCreate, handleUpdate, onCancel }) {
   const isCreating = !event;
-
-  const backgroundColor = [
-    {
-      value: theme.vars.palette.primary.main,
-      color: 'primary.main',
-      label: 'Default'
-    },
-    {
-      value: theme.vars.palette.error.main,
-      color: 'error.main'
-    },
-    {
-      value: theme.vars.palette.success.dark,
-      color: 'success.dark'
-    },
-    {
-      value: theme.vars.palette.secondary.main,
-      color: 'secondary.main'
-    },
-    {
-      value: theme.vars.palette.warning.dark,
-      color: 'warning.dark'
-    },
-    {
-      value: theme.vars.palette.orange.dark,
-      color: 'orange.dark'
-    },
-    {
-      value: theme.vars.palette.grey[500],
-      color: 'grey.500'
-    },
-    {
-      value: theme.vars.palette.primary.light,
-      color: 'primary.light'
-    },
-    {
-      value: theme.vars.palette.error.light,
-      color: 'error.light'
-    },
-    {
-      value: theme.vars.palette.success.light,
-      color: 'success.light'
-    },
-    {
-      value: theme.vars.palette.secondary.light,
-      color: 'secondary.light'
-    },
-    {
-      value: theme.vars.palette.warning.light,
-      color: 'warning.light'
-    },
-    {
-      value: theme.vars.palette.orange.light,
-      color: 'orange.light'
-    }
-  ];
-
-  const textColor = [
-    {
-      value: theme.vars.palette.error.light,
-      color: 'error.light',
-      label: ''
-    },
-    {
-      value: theme.vars.palette.success.light,
-      color: 'success.light',
-      label: ''
-    },
-    {
-      value: theme.vars.palette.secondary.light,
-      color: 'secondary.light',
-      label: ''
-    },
-    {
-      value: theme.vars.palette.warning.light,
-      color: 'warning.light',
-      label: ''
-    },
-    {
-      value: theme.vars.palette.orange.light,
-      color: 'orange.light',
-      label: ''
-    },
-    {
-      value: theme.vars.palette.primary.light,
-      color: 'primary.light',
-      label: ''
-    },
-    {
-      value: theme.vars.palette.primary.main,
-      color: 'primary.main',
-      label: ''
-    },
-    {
-      value: theme.vars.palette.error.main,
-      color: 'error.main',
-      label: ''
-    },
-    {
-      value: theme.vars.palette.success.dark,
-      color: 'success.dark',
-      label: ''
-    },
-    {
-      value: theme.vars.palette.secondary.main,
-      color: 'secondary.main',
-      label: ''
-    },
-    {
-      value: theme.vars.palette.warning.dark,
-      color: 'warning.dark',
-      label: ''
-    },
-    {
-      value: theme.vars.palette.orange.dark,
-      color: 'orange.dark',
-      label: ''
-    },
-    {
-      value: theme.vars.palette.grey[500],
-      color: 'grey.500',
-      label: ''
-    }
-  ];
 
   const EventSchema = Yup.object().shape({
     title: Yup.string().max(255).required('Title is required'),
-    description: Yup.string().max(5000),
-    end: Yup.date().when('start', (start, schema) => start && schema.min(start, 'End date must be later than start date')),
-    start: Yup.date(),
-    color: Yup.string().max(255),
-    textColor: Yup.string().max(255)
+    content: Yup.string().max(5000),
+    endTime: Yup.date().when('startTime', (start, schema) =>
+      start ? schema.min(start, 'End date must be later than start date') : schema
+    ),
+    startTime: Yup.date()
   });
 
+  // ✅ enableReinitialize false로 설정 → 무한루프 방지
   const formik = useFormik({
     initialValues: getInitialValues(event, range),
     validationSchema: EventSchema,
+    enableReinitialize: false,
     onSubmit: async (values, { resetForm, setSubmitting }) => {
       try {
         const data = {
           title: values.title,
-          description: values.description,
-          color: values.color,
-          textColor: values.textColor,
+          content: values.content,
           allDay: values.allDay,
-          start: values.start,
-          end: values.end
+          startTime: values.startTime,
+          endTime: values.endTime
         };
 
         if (event) {
-          handleUpdate(event.id, data);
+          handleUpdate(event.scheduleId || event.id, data);
         } else {
           handleCreate(data);
         }
@@ -216,12 +76,24 @@ export default function AddEventFrom({ event, range, handleDelete, handleCreate,
         onCancel();
         setSubmitting(false);
       } catch (error) {
-        console.error(error);
+        console.error('Submit error:', error);
+        setSubmitting(false);
       }
     }
   });
 
-  const { values, errors, touched, handleSubmit, isSubmitting, getFieldProps, setFieldValue } = formik;
+  const { values, errors, touched, handleSubmit, isSubmitting, getFieldProps, setFieldValue, setValues } = formik;
+
+  // ✅ event, range 바뀔 때만 값 리셋 (무한루프 방지)
+  useEffect(() => {
+    setValues(getInitialValues(event, range));
+  }, [event, range, setValues]);
+
+  const handleDeleteClick = () => {
+    if (!event) return;
+    const ok = window.confirm('정말로 이 일정을 삭제하시겠습니까?');
+    if (ok) handleDelete(event.scheduleId || event.id);
+  };
 
   return (
     <FormikProvider value={formik}>
@@ -229,8 +101,10 @@ export default function AddEventFrom({ event, range, handleDelete, handleCreate,
         <Form autoComplete="off" noValidate onSubmit={handleSubmit}>
           <DialogTitle>{event ? 'Edit Event' : 'Add Event'}</DialogTitle>
           <Divider />
+
           <DialogContent sx={{ p: 3 }}>
             <Grid container spacing={gridSpacing}>
+              {/* 제목 */}
               <Grid size={12}>
                 <TextField
                   fullWidth
@@ -240,103 +114,68 @@ export default function AddEventFrom({ event, range, handleDelete, handleCreate,
                   helperText={touched.title && errors.title}
                 />
               </Grid>
+
+              {/* 내용 */}
               <Grid size={12}>
                 <TextField
                   fullWidth
                   multiline
                   rows={3}
                   label="Description"
-                  {...getFieldProps('description')}
-                  error={Boolean(touched.description && errors.description)}
-                  helperText={touched.description && errors.description}
+                  {...getFieldProps('content')}
+                  error={Boolean(touched.content && errors.content)}
+                  helperText={touched.content && errors.content}
                 />
               </Grid>
+
+              {/* All Day */}
               <Grid size={12}>
                 <FormControlLabel control={<Switch checked={values.allDay} {...getFieldProps('allDay')} />} label="All day" />
               </Grid>
+
+              {/* 시작 날짜 */}
               <Grid size={{ xs: 12, md: 6 }}>
                 <MobileDateTimePicker
                   label="Start date"
-                  value={new Date(values.start)}
-                  format="dd/MM/yyyy hh:mm a"
-                  onChange={(date) => setFieldValue('start', date)}
+                  value={values.startTime}
+                  format="yyyy-MM-dd HH:mm"
+                  onChange={(d) => setFieldValue('startTime', d)}
                   slots={{ openPickerIcon: () => <DateRangeIcon /> }}
                   slotProps={{ textField: { fullWidth: true } }}
                 />
-                {touched.start && errors.start && <FormHelperText error={true}>{errors.start}</FormHelperText>}
+                {touched.startTime && errors.startTime && <FormHelperText error>{errors.startTime}</FormHelperText>}
               </Grid>
+
+              {/* 종료 날짜 */}
               <Grid size={{ xs: 12, md: 6 }}>
                 <MobileDateTimePicker
                   label="End date"
-                  value={new Date(values.end)}
-                  format="dd/MM/yyyy hh:mm a"
-                  onChange={(date) => setFieldValue('end', date)}
+                  value={values.endTime}
+                  format="yyyy-MM-dd HH:mm"
+                  onChange={(d) => setFieldValue('endTime', d)}
                   slots={{ openPickerIcon: () => <DateRangeIcon /> }}
                   slotProps={{ textField: { fullWidth: true } }}
                 />
-                {touched.end && errors.end && <FormHelperText error={true}>{errors.end}</FormHelperText>}
-              </Grid>
-              <Grid size={12}>
-                <Grid container spacing={2}>
-                  <Grid size={12}>
-                    <Typography variant="subtitle1">Background Color</Typography>
-                  </Grid>
-                  <Grid size={12}>
-                    <FormControl>
-                      <RadioGroup
-                        row
-                        aria-label="color"
-                        {...getFieldProps('color')}
-                        onChange={(e) => setFieldValue('color', e.target.value)}
-                        name="color-radio-buttons-group"
-                        sx={{ '& .MuiFormControlLabel-root': { mr: 0 } }}
-                      >
-                        {backgroundColor.map((item, index) => (
-                          <ColorPalette key={index} value={item.value} color={item.color} label={item.label} />
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                  </Grid>
-                </Grid>
-              </Grid>
-              <Grid size={12}>
-                <Grid container spacing={2}>
-                  <Grid size={12}>
-                    <Typography variant="subtitle1">Text Color</Typography>
-                  </Grid>
-                  <Grid size={12}>
-                    <FormControl component="fieldset">
-                      <RadioGroup
-                        row
-                        aria-label="textColor"
-                        {...getFieldProps('textColor')}
-                        onChange={(e) => setFieldValue('textColor', e.target.value)}
-                        name="text-color-radio-buttons-group"
-                        sx={{ '& .MuiFormControlLabel-root': { mr: 0 } }}
-                      >
-                        <FormControlLabel value="" control={<Radio color="default" />} label="Default" sx={{ pr: 1 }} />
-                        {textColor.map((item, index) => (
-                          <ColorPalette key={index} value={item.value} color={item.color} label={item.label} />
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                  </Grid>
-                </Grid>
+                {touched.endTime && errors.endTime && <FormHelperText error>{errors.endTime}</FormHelperText>}
               </Grid>
             </Grid>
           </DialogContent>
 
+          {/* 하단 버튼 */}
           <DialogActions sx={{ p: 3 }}>
             <Grid container sx={{ justifyContent: 'space-between', alignItems: 'center', width: 1 }}>
+              {/* 삭제 */}
               <Grid>
                 {!isCreating && (
                   <Tooltip title="Delete Event">
-                    <IconButton onClick={() => handleDelete(event?.id)} size="large">
+                    <IconButton onClick={handleDeleteClick} size="large" disabled={isSubmitting}>
                       <DeleteIcon color="error" />
                     </IconButton>
                   </Tooltip>
                 )}
               </Grid>
+
+              {/* 취소 / 추가 */}
               <Grid>
                 <Stack direction="row" sx={{ alignItems: 'center', gap: 2 }}>
                   <Button type="button" variant="outlined" onClick={onCancel}>
@@ -355,7 +194,7 @@ export default function AddEventFrom({ event, range, handleDelete, handleCreate,
   );
 }
 
-AddEventFrom.propTypes = {
+AddEventForm.propTypes = {
   event: PropTypes.any,
   range: PropTypes.any,
   handleDelete: PropTypes.func,
