@@ -64,14 +64,20 @@ export default function AttendanceBasicCard({ isLoading }) {
   const handleClick = (event) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
 
-  // 근무 상태
+  //  근무상태 변경 핸들러
+  const handleWorkStatusChange = (statusCode) => {
+    dispatch(updateWorkStatus({ employeeId, statusCode }));
+    handleClose();
+  };
+
+  // 근무 상태 표시 맵
   const workStatusMap = {
     NORMAL: '정상근무',
     LATE: '지각',
     EARLY_LEAVE: '조퇴',
     ABSENT: '결근',
     VACATION: '휴가',
-    OUTSIDE: '외근',
+    OUT_ON_BUSINESS: '외근',
     OFF: '퇴근'
   };
 
@@ -97,7 +103,10 @@ export default function AttendanceBasicCard({ isLoading }) {
       yaxis: { ...barChartOptions.yaxis, labels: { style: { colors: textPrimary } } },
       grid: { borderColor: divider },
       tooltip: { theme: colorScheme },
-      legend: { ...(barChartOptions.legend ?? {}), labels: { ...(barChartOptions.legend?.labels ?? {}), colors: grey500 } }
+      legend: {
+        ...(barChartOptions.legend ?? {}),
+        labels: { ...(barChartOptions.legend?.labels ?? {}), colors: grey500 }
+      }
     });
   }, [colorScheme, fontFamily, primary200, primaryDark, secondaryMain, secondaryLight, textPrimary, grey500, divider]);
 
@@ -183,6 +192,7 @@ export default function AttendanceBasicCard({ isLoading }) {
                   근무상태 변경
                 </Button>
 
+                {/* 상태 변경 메뉴 */}
                 <Menu
                   anchorEl={anchorEl}
                   open={open}
@@ -190,8 +200,8 @@ export default function AttendanceBasicCard({ isLoading }) {
                   anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
                   transformOrigin={{ vertical: 'top', horizontal: 'left' }}
                 >
-                  <MenuItem onClick={handleClose}>휴가</MenuItem>
-                  <MenuItem onClick={handleClose}>외근</MenuItem>
+                  <MenuItem onClick={() => handleWorkStatusChange('out-on-business')}>외근</MenuItem>
+                  <MenuItem onClick={() => handleWorkStatusChange('return-to-office')}>사내 복귀</MenuItem>
                 </Menu>
               </Stack>
             </Stack>
@@ -255,7 +265,13 @@ export default function AttendanceBasicCard({ isLoading }) {
                 <Typography variant="subtitle1" sx={{ color: '#9CA3AF', mb: 0.5 }}>
                   근무 상태
                 </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 600,
+                    color: today?.workStatus === 'OUT_ON_BUSINESS' ? '#FBBF24' : today?.workStatus === 'NORMAL' ? '#60A5FA' : '#E5E7EB'
+                  }}
+                >
                   {workStatusMap[today?.workStatus] || '-'}
                 </Typography>
               </Box>
