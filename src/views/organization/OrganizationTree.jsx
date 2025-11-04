@@ -47,79 +47,79 @@ function CloseSquare(props) {
 // TreeItem의 기본 스타일 
 const TransitionComponent = (props) => <Collapse {...props} />;
 const StyledTreeItem = styled((props) => (
-    <TreeItem {...props} slots={{ groupTransition: TransitionComponent }} />
+  <TreeItem {...props} slots={{ groupTransition: TransitionComponent }} />
 ))(({ theme }) => ({
-    [`& .${treeItemClasses.iconContainer}`]: {
-        '& .close': { opacity: 0.3 },
-    },
-    [`& .${treeItemClasses.groupTransition}`]: {
-        marginLeft: 15,
-        paddingLeft: 20,
-        borderLeft: `1px dashed ${theme.palette.text.disabled}`,
-    },
+  [`& .${treeItemClasses.iconContainer}`]: {
+    '& .close': { opacity: 0.3 },
+  },
+  [`& .${treeItemClasses.groupTransition}`]: {
+    marginLeft: 15,
+    paddingLeft: 20,
+    borderLeft: `1px dashed ${theme.palette.text.disabled}`,
+  },
 }));
 
 // 컴포넌트
 export default function OrganizationTree({ setSelectedDept }) {
-    const [ departments, setDepartments ] = useState([]);
+  const [departments, setDepartments] = useState([]);
 
-    // 1. 부서 데이터 로드
-    useEffect(() => {
-        organizationAPI
-        .getDepartments()
-        .then((data) => setDepartments(data || []))
-        .catch((err) => console.error("부서 가져오기 실패", err));
-    }, []);
+  // 1. 부서 데이터 로드
+  useEffect(() => {
+    organizationAPI
+      .getDepartments()
+      .then((data) => setDepartments(data || []))
+      .catch((err) => console.error("부서 가져오기 실패", err));
+  }, []);
 
-    // 2. 부서 클릭 시 선택 이벤트 처리
-    const handleSelect = (event, itemIds) => {
-        const selected = Array.isArray(itemIds) ? itemIds[0] : itemIds;
-        console.log("클릭된 부서 코드:" , selected);
-        setSelectedDept(selected);
+  // 2. 부서 클릭 시 선택 이벤트 처리
+  const handleSelect = (event, itemIds) => {
+    const selected = Array.isArray(itemIds) ? itemIds[0] : itemIds;
+    console.log("클릭된 부서 ID:", selected);
+    setSelectedDept(selected);
   };
 
-    // 3. 트리 구조 렌더링 
-    const renderTree = (parentCode) => {
-        // 현재 parentCode를 부모로 갖는 자식 부서 필터링
-        const children = departments.filter((d) => (d.value2 ?? null) === parentCode);
-        if (children.length === 0) return null;
+  // 3. 트리 구조 렌더링 
+  const renderTree = (parentCode) => {
+    // 현재 parentCode를 부모로 갖는 자식 부서 필터링
+    const children = departments.filter((d) => (d.value2 ?? null) === parentCode);
+    if (children.length === 0) return null;
 
-        return children.map((child) => (
-            <StyledTreeItem
-                key={child.code}
-                itemId={child.code}
-                label={child.value1}
-                >
-                {renderTree(child.code)}
-                </StyledTreeItem>
-        ));
-    };
+    return children.map((child) => (
+      <StyledTreeItem
+        key={child.commonCodeId}
+        itemId={String(child.commonCodeId)}
+        label={child.value1}
+      >
+        {renderTree(child.code)}
+      </StyledTreeItem>
+    ));
+  };
 
-    // 4. 최상위 부서
-    const roots = departments.filter((d) => (d.value2 ?? null) === null);
+  // 4. 최상위 부서
+  const roots = departments.filter((d) => (d.value2 ?? null) === null);
 
-    // 5. 트리 렌더링
-    return (
+  // 5. 트리 렌더링
+  return (
     <SimpleTreeView
-     slots={{
-    collapseIcon: MinusSquare,
-    expandIcon: PlusSquare,
-    endIcon: CloseSquare
-  }}
-  defaultExpandedItems={[roots[0]?.code]}  // 초기 상태
-  onSelectedItemsChange={handleSelect}     // 클릭 시 선택 이벤트
-  sx={{ height: "100%", flexGrow: 1, overflowY: "auto" }}
+      slots={{
+        collapseIcon: MinusSquare,
+        expandIcon: PlusSquare,
+        endIcon: CloseSquare
+      }}
+      defaultExpandedItems={[roots[0]?.code]}  // 초기 상태
+      onSelectedItemsChange={handleSelect}     // 클릭 시 선택 이벤트
+      sx={{ height: "100%", flexGrow: 1 }}
     >
-            {roots.map((root) => (
-                <StyledTreeItem
-                    key={root.code}     // React가 각 노드를 식별하기 위한 고유 키
-                    itemId={root.code}  // 트리 내부에서 식별할 ID (클릭/선택 이벤트)
-                    label={root.value1} // 트리에 표시할 텍스트 (부서 이름)
-                    >
-                    {renderTree(root.code)}
-                    </StyledTreeItem>
-            ))}
-        </SimpleTreeView>
-    );
+      {roots.map((root) => (
+        <StyledTreeItem
+          key={root.commonCodeId}     // React가 각 노드를 식별하기 위한 고유 키
+          itemId={String(root.commonCodeId)}  // 트리 내부에서 식별할 ID (클릭/선택 이벤트)
+          label={root.value1} // 트리에 표시할 텍스트 (부서 이름)
+        >
+          {renderTree(root.code)}
+        </StyledTreeItem>
+      ))}
+    </SimpleTreeView>
+  );
 
 }

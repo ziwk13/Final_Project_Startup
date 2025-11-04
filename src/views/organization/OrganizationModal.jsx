@@ -1,4 +1,4 @@
-// 조직도 모달 (Berry WidgetData 스타일)
+// 조직도 모달
 import {
   Dialog,
   DialogActions,
@@ -13,7 +13,7 @@ import { gridSpacing } from "store/constant";
 import MainCard from "ui-component/cards/MainCard";
 import OrganizationTree from "./OrganizationTree";
 import EmployeeList from "./EmployeeList";
-import EmployeeDetailCard from "./EmployeeDetailCard";
+import EmployeeDetail from "./EmployeeDetailBase";
 
 export default function OrganizationModal({ open, onClose }) {
   const [selectedDept, setSelectedDept] = useState(null);
@@ -51,15 +51,26 @@ export default function OrganizationModal({ open, onClose }) {
 
       <DialogContent sx={{ flex: 1, overflow: "hidden" }}>
         {/* === Berry의 Data/index.jsx 구조와 동일 === */}
-        <Grid container spacing={gridSpacing}>
-          <Grid size={{ xs: 12, lg: 4, md: 6 }}>
-            <MainCard title="부서" content={false}>
+        <Grid container spacing={gridSpacing}
+          justifyContent="center"
+        >
+          <Grid size={{ xs: 12, lg: 3, md: 6 }}>
+            <MainCard title="부서" content={false}
+              sx={{
+
+                height: 550,
+
+                overflowY: "auto",
+              }}>
               <OrganizationTree setSelectedDept={setSelectedDept} />
             </MainCard>
           </Grid>
 
-          <Grid size={{ xs: 12, lg: 4, md: 6 }}>
-            <MainCard title="직원 목록" content={false}>
+          <Grid size={{ xs: 12, lg: 3, md: 6 }}>
+            <MainCard title="직원 목록" content={false}
+              sx={{
+                height: 550,
+              }}>
               <EmployeeList
                 selectedDept={selectedDept}
                 setSelectedEmployee={setSelectedEmployee}
@@ -67,8 +78,8 @@ export default function OrganizationModal({ open, onClose }) {
             </MainCard>
           </Grid>
 
-          <Grid size={{ xs: 12, lg: 4, md: 12 }}>
-            <EmployeeDetailCard selectedEmployee={selectedEmployee} />
+          <Grid size={{ xs: 12, lg: 3, md: 12 }}>
+            <EmployeeDetail selectedEmployee={selectedEmployee} />
           </Grid>
         </Grid>
       </DialogContent>
