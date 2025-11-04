@@ -16,7 +16,7 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
 // project imports
-import { deleteAllNotifications, getTotalCount, getUnreadCount, markAllAsRead } from 'api/notification';
+import { deleteAllNotifications, getUnreadCount, markAllAsRead } from 'api/notification';
 import NotificationList from './components/NotificationList';
 
 // assets
@@ -57,7 +57,6 @@ export default function NotificationSection() {
   const [value, setValue] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
 
   const anchorRef = useRef(null);
   const listRef = useRef(null);  // NotificationList의 loadMore 함수를 호출하기 위한 ref
@@ -93,17 +92,9 @@ export default function NotificationSection() {
       } catch (error) {
         console.error('초기 읽지 않은 개수 조회 실패: ', error);
       }
-      try {
-        const totalData = await getTotalCount();
-        if(typeof totalData === 'number') {
-          setTotalCount(totalData);
-        }
-      } catch (error) {
-        console.error('초기 전체 개수 조회 실패', error);
-      }
     };
     fetchInitialData();
-  }, []);
+  }, [refreshKey]);
 
   // 웹소켓 연결 및 구독
   useEffect(() => {
@@ -115,13 +106,13 @@ export default function NotificationSection() {
       stompService.subscribeToNotifications((payload) => {
         console.log('STOMP: 새 알림 개수 수신', payload);
         setUnreadCount(payload.unreadCount);
-        setTotalCount(payload.totalCount);
+        setRefreshKey(prevKey => prevKey + 1);
       });
     });
     return () => {
       stompService.disconnect();
     };
-    }, []);
+  }, []);
 
   // 전체 알림 읽기
   const handleClick = async () => {
@@ -144,7 +135,6 @@ export default function NotificationSection() {
     try {
       await deleteAllNotifications();
       setUnreadCount(0);  // 안 읽은 개수
-      setTotalCount(0);  // 전체 개수
       setRefreshKey(prevKey => prevKey + 1);
     } catch (error) {
       // API 파일에서 실패 처리 콘솔 생성
@@ -217,7 +207,7 @@ export default function NotificationSection() {
                       <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', pt: 2, px: 2 }}>
                         <Stack direction="row" sx={{ gap: 2 }}>
                           <Typography variant="subtitle1">모든 알림</Typography>
-                          <Chip size="small" label={totalCount} variant="filled" sx={{ color: 'background.default', bgcolor: 'warning.dark' }} />
+                          <Chip size="small" label={unreadCount} variant="filled" sx={{ color: 'background.default', bgcolor: 'warning.dark' }} />
                         </Stack>
                         <Stack direction="row" spacing={0.5}>
                           <Tooltip title="전체 알림 읽음">
@@ -240,7 +230,6 @@ export default function NotificationSection() {
                           ref={listRef}
                           refreshKey={refreshKey}
                           onCountChange={setUnreadCount}
-                          onTotalCountChange={setTotalCount}
                           onClose={handleClose}
                         />
                       </Box>
