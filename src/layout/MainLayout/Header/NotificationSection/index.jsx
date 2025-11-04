@@ -129,9 +129,6 @@ export default function NotificationSection() {
 
   // 전체 알림 삭제
   const handleDeleteAllClick = async () => {
-    if (!window.confirm("모든 알림을 삭제 하시겠습니까")) {
-      return;
-    }
     try {
       await deleteAllNotifications();
       setUnreadCount(0);  // 안 읽은 개수
