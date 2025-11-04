@@ -12,6 +12,8 @@ const SamplePage = Loadable(lazy(() => import('views/sample-page')));
 const AddApprovalPage = Loadable(lazy(() => import('features/approval/pages/AddApprovalPage')));
 const ApprovalListPage = Loadable(lazy(() => import('features/approval/pages/ApprovalListPage')));
 const MyPage = Loadable(lazy(() => import('features/mypage/pages/MyInfoPage')));
+const SchedulePage = Loadable(lazy(() => import('features/schedule/pages/SchedulePage')));
+const AttendancePage = Loadable(lazy(() => import('features/attendance/pages/AttendancePage')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -33,15 +35,18 @@ const MainRoutes = {
         {
           path: 'form',
           element: <AddApprovalPage />
-        },{
+        },
+        {
           path: 'list/:status',
           element: <ApprovalListPage />
-        },{
-          path: 'detail',
-          // element: <ApprovalDetail />
         },
+        {
+          path: 'detail'
+          // element: <ApprovalDetail />
+        }
       ]
-    },{
+    },
+    {
       path: '/mypage',
       element: <MyPage />
     },
@@ -53,8 +58,15 @@ const MainRoutes = {
           element: <MailWritePage />
         }
       ]
+    },
+    {
+      path: '/schedule',
+      element: <SchedulePage />
+    },
+    {
+      path: '/attendance',
+      element: <AttendancePage />
     }
-
   ]
 };
 
