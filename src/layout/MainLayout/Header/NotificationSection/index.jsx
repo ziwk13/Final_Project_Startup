@@ -14,6 +14,7 @@ import { useTheme } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import { Button } from '@mui/material';
 
 // project imports
 import { deleteAllNotifications, getUnreadCount, markAllAsRead } from 'api/notification';
@@ -26,6 +27,7 @@ import BellCheckIcon from 'assets/icons/BellCheckIcon';
 import IconBell from 'assets/icons/IconBell';
 import IconBellRingingFilled from 'assets/icons/IconBellRingingFilled';
 import TrashIcon from 'assets/icons/TrashIcon';
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 
 // notification status options
 const status = [
@@ -57,21 +59,11 @@ export default function NotificationSection() {
   const [value, setValue] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const anchorRef = useRef(null);
   const listRef = useRef(null);  // NotificationList의 loadMore 함수를 호출하기 위한 ref
   const scrollRef = useRef(null);  // 스크롤 이벤트를 감지할 Box의 ref
-
-  const handleToggle = () => {
-    setOpen((prevOpen) => !prevOpen);
-  };
-
-  const handleClose = (event) => {
-    if (anchorRef.current && anchorRef.current.contains(event.target)) {
-      return;
-    }
-    setOpen(false);
-  };
 
   const prevOpen = useRef(open);
   useEffect(() => {
@@ -127,16 +119,40 @@ export default function NotificationSection() {
     }
   }
 
-  // 전체 알림 삭제
-  const handleDeleteAllClick = async () => {
+  // Dialog 열기 핸들러
+  const handleDeleteAllClick = () => {
+    setDialogOpen(true);
+  };
+
+  // Dialog 닫기 핸들러
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+  };
+
+  // 실제 Dialog의 삭제 로직을 처리할 핸들러
+  const handleConfirmDelete = async () => {
     try {
       await deleteAllNotifications();
-      setUnreadCount(0);  // 안 읽은 개수
+      setUnreadCount(0);  // 안읽은 개수
       setRefreshKey(prevKey => prevKey + 1);
     } catch (error) {
-      // API 파일에서 실패 처리 콘솔 생성
+      // API 파일에서 실패 처리
     }
-  }
+    // 처리가 끝나면 닫기
+    setDialogOpen(false);
+  };
+
+  const handleToggle = () => {
+    setOpen((prevOpen) => !prevOpen);
+  };
+
+  const handleClose = (event) => {
+    if (anchorRef.current && anchorRef.current.contains(event.target)) {
+      return;
+    }
+    setOpen(false);
+  };
+
   const handleScroll = () => {
     const scrollBox = scrollRef.current;
     if (scrollBox) {
@@ -212,6 +228,27 @@ export default function NotificationSection() {
                               <BellCheckIcon />
                             </IconButton>
                           </Tooltip>
+                          <Dialog
+                            open={dialogOpen}
+                            onClose={handleDialogClose}
+                            aria-labelledby="alert-dialog-title"
+                            aria-describedby="alert-dialog-description"
+                          >
+                            <DialogTitle id="alert-dialog-title" textAlign={'center'}>
+                              {"알림 전체 삭제"}
+                            </DialogTitle>
+                            <DialogContent>
+                              <DialogContentText id="alert-dialog-description">
+                                모든 알림을 삭제 하시겠습니까?
+                              </DialogContentText>
+                            </DialogContent>
+                            <DialogActions>
+                              <Button onClick={handleConfirmDelete} color="error" autoFocus>
+                                삭제
+                              </Button>
+                              <Button onClick={handleDialogClose}>취소</Button>
+                            </DialogActions>
+                          </Dialog>
                           <Tooltip title="전체 알림 삭제">
                             <IconButton onClick={handleDeleteAllClick} color="error" size="small">
                               <TrashIcon />
