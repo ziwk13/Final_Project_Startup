@@ -73,7 +73,7 @@ export default function NotificationSection() {
     prevOpen.current = open;
   }, [open]);
 
-  // 최초 1회 읽지 않은/전체 알림 개수 조회(HTTP)
+  // 최초 1회 읽지 않은(HTTP)
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
