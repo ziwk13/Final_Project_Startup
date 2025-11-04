@@ -26,11 +26,20 @@ function Transition(props) {
 
 // 메일 API 함수 호출
 import { uploadAttachments } from '../api/mailAPI';
+import { sendMail } from '../api/mailAPI';
 
 export default function MailWrite() {
+	// 요청할 메일 정보 데이터
+	const [title, setTitle] = useState('');
+	const [content, setContent] = useState('');
+	const [to, setTo] = useState('');
+	const [cc, setCc] = useState('');
+	const [bcc, setBcc] = useState('');
+  const [attachments, setAttachments] = useState([]);
+
+
   const [open, setOpen] = useState(false);
   const { colorScheme } = useColorScheme();
-  const [attachments, setAttachments] = useState([]);
 
   const [ccBccValue, setCcBccValue] = useState(false);
   const handleCcBccChange = (event) => {
@@ -51,11 +60,6 @@ export default function MailWrite() {
   }
 
 	const handleReplyClick = async () => {
-    if (attachments.length === 0) {
-      alert('첨부된 파일이 없습니다.');
-      return;
-    }
-
     const formData = new FormData();
     attachments.forEach((file) => formData.append('files', file));
 
@@ -69,6 +73,29 @@ export default function MailWrite() {
     }
   };
 
+	const handleSendMail = async () => {
+		const formData = new FormData();
+
+		// MailSendRequestDTO 필드 (임의 값)
+		formData.append('title', title);
+		formData.append('content', content);
+		formData.append('to', to);
+		formData.append('cc', cc);
+		formData.append('bcc', bcc);
+
+		// 첨부파일 (Dropzone에서 선택된 파일)
+		attachments.forEach((file) => formData.append('files', file));
+
+		try {
+			const res = await sendMail(formData);
+			console.log('✅ 메일 전송 성공:', res.data);
+			alert('메일 전송 성공!');
+		} catch (err) {
+			console.error('❌ 메일 전송 실패:', err);
+			alert('메일 전송 중 오류가 발생했습니다.');
+		}
+	}
+
   return (
 	<Grid container spacing={gridSpacing}>
      	<Grid size={12}>
@@ -76,7 +103,7 @@ export default function MailWrite() {
 			<Grid container spacing={gridSpacing}>
 			<Grid size={12}>
 				<Box sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-				<Button variant="contained" onClick={handleReplyClick}>Reply</Button>
+				<Button variant="contained" onClick={handleSendMail}>Reply</Button>
 
 				<Link
 					component={RouterLink}
