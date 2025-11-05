@@ -9,7 +9,7 @@ import Stack from '@mui/material/Stack';
 import UploadMultiFile from 'ui-component/third-party/dropzone/MultiFileUpload';
 import { gridSpacing } from 'store/constant';
 
-export default function AttachmentDropzone({attachments, setAttachments}) {
+export default function AttachmentDropzone({attachments, setAttachments, height}) {
   const [list, setList] = useState(false);
   const [error, setError] = useState('');
 
@@ -29,6 +29,7 @@ export default function AttachmentDropzone({attachments, setAttachments}) {
                 showList={list}
                 files={attachments}
                 onFilesChange={handleFilesChange}
+                height={height}
               />
             </Stack>
             {error && (

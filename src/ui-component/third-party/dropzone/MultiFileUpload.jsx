@@ -24,8 +24,7 @@ const DropzoneWrapper = styled('div')(({ theme }) => ({
 
 // ==============================|| UPLOAD - MULTIPLE FILE ||============================== //
 
-export default function MultiFileUpload({ showList = false, files, onFilesChange}) {
-  // 공용으로 하면 좋을듯
+export default function MultiFileUpload({ showList = false, files, onFilesChange, height}) {
   const CustomButton = styled(Button)({
     height: 35,
     lineHeight: '35px',
@@ -75,7 +74,8 @@ export default function MultiFileUpload({ showList = false, files, onFilesChange
                 bgcolor: 'error.lighter'
               }),
 
-              height:200,
+              height:{height},
+              minHeight:'150px',
               padding:'10px',
               overflowY:'auto',
               display:'flex',
