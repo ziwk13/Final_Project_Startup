@@ -9,7 +9,6 @@ import Typography from '@mui/material/Typography';
 import { useDropzone } from 'react-dropzone';
 
 // project imports
-import RejectionFiles from './RejectionFile';
 import { withAlpha } from 'utils/colorUtils';
 
 // assets
@@ -59,7 +58,7 @@ const PlaceholderWrapper = styled('div')(({ theme }) => ({
 
 // ==============================|| UPLOAD - AVATAR ||============================== //
 
-export default function AvatarUpload({file, setFile, sx,}) {
+export default function AvatarUpload({file, setFile}) {
   const { getRootProps, getInputProps, isDragActive, isDragReject, fileRejections } = useDropzone({
     accept: {'image/*': []},
     multiple: false,
@@ -101,7 +100,7 @@ export default function AvatarUpload({file, setFile, sx,}) {
       </RootWrapper>
 
       {fileRejections.length > 0 && (
-        <Typography variant="caption" color="error">
+        <Typography variant="caption" color="red">
           파일 형식이 올바르지 않습니다.
         </Typography>
       )}

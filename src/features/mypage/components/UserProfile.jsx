@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axiosServices from '../../../utils/axios';
 
 // material-ui
 import Grid from '@mui/material/Grid';
@@ -16,13 +15,9 @@ import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 
 // project imports
-import Avatar from 'ui-component/extended/Avatar';
 import { gridSpacing } from 'store/constant';
 import useAuth from 'hooks/useAuth';
 import AnimateButton from '../../../ui-component/extended/AnimateButton';
-
-// assets
-import ErrorTwoToneIcon from '@mui/icons-material/ErrorTwoTone';
 
 // 아이콘 imports
 import AccountCircleTwoToneIcon from '@mui/icons-material/AccountCircleTwoTone';
@@ -83,7 +78,7 @@ export default function UserProfile() {
 
       {/* 기존 프로필 이미지 영역 */}
       <Grid size={4}>
-        <Grid container direction="column" sx={{ alignItems: 'center', gap: 2 }}>
+        {/* <Grid container direction="column" sx={{ alignItems: 'center', gap: 2 }}>
           <Grid>
             <Avatar alt="User" src={user?.profileImg} sx={{ height: 150, width: 150 }} />
           </Grid>
@@ -102,38 +97,10 @@ export default function UserProfile() {
               </Grid>
             </Grid>
           </Grid>
-        </Grid>
+        </Grid> */}
         
         {/* 프로필 이미지 부분 */}
         <AttachmentProfile file={file} setFile={setFile}/>
-         <Stack sx={{ mt: 2, alignItems: 'center' }}>
-    <Button
-      variant="contained"
-      color="primary"
-      onClick={async () => {
-        if (!file) {
-          alert('파일을 먼저 선택하세요.');
-          return;
-        }
-
-        const formData = new FormData();
-        formData.append('files', file); // 서비스가 List<MultipartFile>이면 그대로 유지
-
-        try {
-          const res = await axiosServices.post('/api/attachmentFiles/upload', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          });
-          console.log('✅ 업로드 성공:', res.data);
-          alert('업로드 성공!');
-        } catch (err) {
-          console.error('❌ 업로드 실패:', err);
-          alert('업로드 실패');
-        }
-      }}
-    >
-      프로필 업로드 테스트
-    </Button>
-  </Stack>
       </Grid>
 
 

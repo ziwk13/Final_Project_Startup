@@ -1,12 +1,7 @@
 import { useState } from 'react';
 
 // mui
-import Button from '@mui/material/Button';
-import Grid from '@mui/material/Grid';
-import FormHelperText from '@mui/material/FormHelperText';
-import IconButton from '@mui/material/IconButton';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
+import {Button, Grid, Stack, Typography} from '@mui/material';
 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
@@ -15,8 +10,6 @@ import { gridSpacing } from 'store/constant';
 
 
 export default function AttachmentProfile({file, setFile}) {
-  const [list, setList] = useState(false);
-
   return (
     <Grid container spacing={gridSpacing}>
       <Grid size={12}>
