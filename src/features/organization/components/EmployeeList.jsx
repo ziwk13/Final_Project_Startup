@@ -72,7 +72,7 @@ export default function EmployeeList({ selectedDept, setSelectedEmployee }) {
         }
       }}
     >
-      {/* ✅ 제목(MainCard.title)은 고정, 아래 내용만 스크롤 */}
+      {/* 제목(MainCard.title)은 고정, 아래 내용만 스크롤 */}
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         {/* 내부 표면만 사용, 이중 스크롤 방지 */}
         <Paper sx={{ height: "100%", boxShadow: "none", background: "transparent", p: 0 }}>

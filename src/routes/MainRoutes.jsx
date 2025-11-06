@@ -4,6 +4,7 @@ import { lazy } from 'react';
 import MainLayout from 'layout/MainLayout';
 import Loadable from 'ui-component/Loadable';
 import AuthGuard from 'utils/route-guard/AuthGuard';
+import TestModal from '../features/organization/components/TestModal';
 
 // sample page routing
 const SamplePage = Loadable(lazy(() => import('views/sample-page')));
@@ -59,6 +60,10 @@ const MainRoutes = {
     {
       path: '/attendance',
       element: <AttendancePage />
+    },
+    {
+      path: '/test-Modal',
+      element: <TestModal />
     }
   ]
 };

@@ -7,7 +7,7 @@ export const organizationAPI = {
   // 부서 목록 조회
   getDepartments: async () => {
     try {
-      const res = await axiosServices.get(`${API_BASE_URL}/commoncode/department`);
+      const res = await axiosServices.get(`${API_BASE_URL}/commoncodes/department`);
       // APIResponseDTO 형태일 수도 있으니 data 필드 우선 확인
       const data = res.data?.data || res.data;
       console.log("부서 목록 응답", data);
