@@ -65,8 +65,8 @@ const pages = {
           id: 'mail-inbox',
           title: '받은메일함',
           type: 'item',
-          url: '/pages/error',
-          target: true
+          url: '/mail/list',
+          target: false
         },
         {
           id: 'mail-sent',
@@ -88,6 +88,20 @@ const pages = {
           type: 'item',
           url: '/pages/500',
           target: true
+        },
+        {
+          id: 'mail-write',
+          title: '메일작성',
+          type: 'item',
+          url: '/mail/write',
+          target: false
+        },
+        {
+          id: 'mail-detail',
+          title: '메일상세',
+          type: 'item',
+          url: '/mail/detail',
+          target: false
         }
       ]
     },
