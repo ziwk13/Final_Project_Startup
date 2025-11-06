@@ -130,7 +130,7 @@ export default function OrganizationModal({ open, onClose }) {
             {/* 가운데 컬럼도 독립 스크롤 */}
             <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
               <EmployeeList
-                selectedDept={selectedDept}
+                selectedDept={selectedDept?.commonCodeId}
                 setSelectedEmployee={setSelectedEmployee}
               />
             </Box>
