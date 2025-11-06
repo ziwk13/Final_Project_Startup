@@ -74,7 +74,7 @@ export default function MultiFileUpload({ showList = false, files, onFilesChange
                 bgcolor: 'error.lighter'
               }),
 
-              height:{height},
+              height:height,
               minHeight:'150px',
               padding:'10px',
               overflowY:'auto',
