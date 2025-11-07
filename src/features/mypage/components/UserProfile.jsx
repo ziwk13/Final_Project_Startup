@@ -34,6 +34,8 @@ import AttachmentProfile from 'ui-component/extended/AttachmentProfile';
 
 export default function UserProfile() {
   const { user, updateProfile } = useAuth();
+  const [file, setFile] = useState();
+  
 
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
   const [successMessage, setSuccessMessage] = useState(null);
@@ -104,7 +106,7 @@ export default function UserProfile() {
           
           {/* 프로필 이미지 부분 */}
           {/* <AttachmentProfile file={file} setFile={setFile}/> */}
-          <AttachmentProfile/>
+          <AttachmentProfile file={file} setFile={setFile}/>
         </Grid>
 
       <Grid size={8}>
