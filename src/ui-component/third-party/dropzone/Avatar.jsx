@@ -2,7 +2,6 @@ import PropTypes from 'prop-types';
 // material-ui
 import { styled } from '@mui/material/styles';
 import CardMedia from '@mui/material/CardMedia';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 // third party
@@ -10,9 +9,7 @@ import { useDropzone } from 'react-dropzone';
 
 // project imports
 import { withAlpha } from 'utils/colorUtils';
-
-// assets
-import CameraAltOutlinedIcon from '@mui/icons-material/CameraAltOutlined';
+import useAuth from 'hooks/useAuth';
 
 const RootWrapper = styled('div')(({ theme }) => ({
   width: 124,
@@ -59,6 +56,7 @@ const PlaceholderWrapper = styled('div')(({ theme }) => ({
 // ==============================|| UPLOAD - AVATAR ||============================== //
 
 export default function AvatarUpload({file, setFile}) {
+  const {getProfileImg} = useAuth();
   const { getRootProps, getInputProps, isDragActive, isDragReject, fileRejections } = useDropzone({
     accept: {'image/*': []},
     multiple: false,
@@ -76,26 +74,7 @@ export default function AvatarUpload({file, setFile}) {
       <RootWrapper sx={{ ...((isDragReject) && { borderColor: 'error.light' }), height:'150px', width:'150px'}}>
         <DropzoneWrapper {...getRootProps()} sx={{ ...(isDragActive && { opacity: 0.6 }) }}>
           <input {...getInputProps()} />
-          {file && (
-            <CardMedia
-              component="img"
-              alt={file.name}
-              src={file.preview}
-              onLoad={() => URL.revokeObjectURL(file.preview)}
-            />
-          )}
-          <PlaceholderWrapper
-            className="placeholder"
-            sx={{
-              ...(file && { opacity: 0, color: 'common.white', bgcolor: 'grey.900' }),
-              ...((isDragReject) && { bgcolor: 'error.lighter' })
-            }}
-          >
-            <Stack sx={{ gap: 0.5, alignItems: 'center', color: file ? 'background.default' : 'secondary.main' }}>
-              <CameraAltOutlinedIcon style={{ fontSize: '2rem' }} />
-              <Typography>{file ? 'Update' : 'Upload'}</Typography>
-            </Stack>
-          </PlaceholderWrapper>
+          <CardMedia component='img' src = {file ? URL.createObjectURL(file) : getProfileImg()}/>
         </DropzoneWrapper>
       </RootWrapper>
 
@@ -111,5 +90,4 @@ export default function AvatarUpload({file, setFile}) {
 AvatarUpload.propTypes = {
   file: PropTypes.array,
   setFile: PropTypes.any,
-  sx: PropTypes.any,
 };
