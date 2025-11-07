@@ -42,6 +42,13 @@ const pages = {
   type: 'group',
   children: [
     {
+      id: 'organization',
+      title: '인사관리',
+      type: 'item',
+      icon: icons.IconBadge,
+      url: '/organization'
+    },
+    {
       id: 'gntaegwanry',
       title: '근태관리',
       type: 'item',
