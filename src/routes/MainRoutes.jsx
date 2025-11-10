@@ -7,7 +7,6 @@ import AuthGuard from 'utils/route-guard/AuthGuard';
 import MailListPage from '../features/mail/pages/MailListPage';
 import MailWritePage from '../features/mail/pages/MailWritePage';
 import MailDetailPage from '../features/mail/pages/MailDetailPage';
-import OrganizationModalPreview from '../features/organization/components/OrganizationModalPreview';
 
 // sample page routing
 const SamplePage = Loadable(lazy(() => import('views/sample-page')));
@@ -16,7 +15,6 @@ const ApprovalListPage = Loadable(lazy(() => import('features/approval/pages/App
 const MyPage = Loadable(lazy(() => import('features/mypage/pages/MyInfoPage')));
 const SchedulePage = Loadable(lazy(() => import('features/schedule/pages/SchedulePage')));
 const AttendancePage = Loadable(lazy(() => import('features/attendance/pages/AttendancePage')));
-const OrganizationPage = Loadable(lazy(() => import('features/organization/pages/OrganizationPage')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -48,10 +46,6 @@ const MainRoutes = {
           // element: <ApprovalDetail />
         }
       ]
-    },
-    {
-      path: '/organization',
-      element: <OrganizationPage />
     },{
       path: '/mypage',
       element: <MyPage />
@@ -80,11 +74,8 @@ const MainRoutes = {
     {
       path: '/attendance',
       element: <AttendancePage />
-    },
-    {
-      path: '/organizationModalPreview',
-      element: <OrganizationModalPreview />
     }
+    
   ]
 };
 

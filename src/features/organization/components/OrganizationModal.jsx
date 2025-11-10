@@ -23,6 +23,8 @@ import MainCard from 'ui-component/cards/MainCard';
 import EmployeeDetail from './EmployeeDetailBase'; // 직원 삭세정보 컴포넌트
 import EmployeeList from './EmployeeList';         // 직원 목록 컴포넌트
 import OrganizationTree from './OrganizationTree'; // 부서 트리 컴포넌트
+import DefaultAvatar from 'assets/images/profile/default_profile.png';
+import { getImageUrl } from 'utils/getImageUrl';
 
 export default function OrganizationModal({ open, onClose, list = [], setList }) {
   // 선택된 부서 정보
@@ -282,7 +284,7 @@ export default function OrganizationModal({ open, onClose, list = [], setList })
                                 <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
                                   <Avatar
                                     alt={emp.name}
-                                    src={emp.profileImg}
+                                    src={emp.profileImg ? getImageUrl(emp.profileImg) : DefaultAvatar}
                                     sx={{ width: 36, height: 36 }}
                                   />
                                   <Stack sx={{ lineHeight: 1 }}>

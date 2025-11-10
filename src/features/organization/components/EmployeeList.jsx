@@ -8,6 +8,8 @@ import { organizationAPI } from '../api/organizationApi';
 import Avatar from 'ui-component/extended/Avatar';
 import Stack from '@mui/material/Stack';
 import MainCard from 'ui-component/cards/MainCard';
+import DefaultAvatar from 'assets/images/profile/default_profile.png';
+import { getImageUrl } from 'utils/getImageUrl';
 
 // 컴포넌트
 export default function EmployeeList({ selectedDept, onSelectEmployee, refreshList, selectedEmployeeId, showHeader = true }) {
@@ -102,7 +104,7 @@ export default function EmployeeList({ selectedDept, onSelectEmployee, refreshLi
                     sx={{ px: 2, py: 1.25 }}
                   >
                     <Stack direction="row" sx={{ alignItems: 'center', gap: 1.5 }}>
-                      <Avatar alt={emp.name} src={emp.profileImg} />
+                      <Avatar alt={emp.name} src={emp.profileImg ? getImageUrl(emp.profileImg) : DefaultAvatar} />
                       <Stack>
                         <Typography variant="subtitle1">{`${emp.name} ${emp.position}`}</Typography>
                       </Stack>
