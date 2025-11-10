@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import CloseIcon from '@mui/icons-material/Close';
 import { Avatar, Chip, IconButton, ListItem, ListItemAvatar, Stack, Typography, Box } from '@mui/material';
 
-import { IconBadge, IconBug, IconFileCheck, IconMail } from '@tabler/icons-react';
+import { IconBadge, IconBug, IconFileCheck, IconMail, IconCalendar } from '@tabler/icons-react';
 import EmployeeIcon from 'assets/icons/EmployeeIcon';
 
 // date-fns 라이브러리
@@ -51,6 +51,8 @@ const NotificationItem = ({ notification, onItemRead, onItemDelete, onClose }) =
         return <IconFileCheck />;
       case 'WORKLOG':
         return <IconBadge />;
+      case 'SCHEDULEINVITE':
+        return <IconCalendar />;
       default:
         return null;
     }
@@ -65,7 +67,7 @@ const NotificationItem = ({ notification, onItemRead, onItemDelete, onClose }) =
             onItemRead(id);
           }
         })
-        .catch(error => {
+        .catch((error) => {
           // API 파일에서 콘솔 에러 출력
         });
     }
@@ -86,7 +88,7 @@ const NotificationItem = ({ notification, onItemRead, onItemDelete, onClose }) =
           onItemDelete(id);
         }
       })
-      .catch(error => {
+      .catch((error) => {
         // API 파일에서 콘솔 에러 출력
       });
   };
@@ -99,7 +101,7 @@ const NotificationItem = ({ notification, onItemRead, onItemDelete, onClose }) =
           position: 'absolute',
           top: 1.5,
           right: 8,
-          zIndex: 1,
+          zIndex: 1
         }}
       >
         <CloseIcon fontSize="inherit" />
@@ -107,38 +109,28 @@ const NotificationItem = ({ notification, onItemRead, onItemDelete, onClose }) =
       <ListItem
         alignItems="center"
         disablePadding
-        secondaryAction={
-          <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'flex-end' }}>
-          </Stack>
-        }
+        secondaryAction={<Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'flex-end' }}></Stack>}
       >
         <ListItemAvatar>
           {/* 알림 종류에 따른 아이콘 불러오기 */}
           <Avatar>{renderIcon()}</Avatar>
         </ListItemAvatar>
-        <Box
-          sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {title}
-        </Box>
+        <Box sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</Box>
       </ListItem>
       <Stack sx={containerSX}>
-        <Typography
-          variant="subtitle2"
-          noWrap
-          sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-        >
+        <Typography variant="subtitle2" noWrap sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {content}
         </Typography>
-        <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }} >
+        <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
           {!isRead && (
             <>
               <Chip label="안읽음" color="error" size="small" sx={{ width: 'min-content' }} />
-              {isRecent && (
-                <Chip label="새 알림" color="warning" size="small" sx={{ width: 'min-content' }} />
-              )}
+              {isRecent && <Chip label="새 알림" color="warning" size="small" sx={{ width: 'min-content' }} />}
             </>
           )}
-          <Typography variant="caption" sx={{ marginLeft: 'auto' }}>{displayTime}</Typography>
+          <Typography variant="caption" sx={{ marginLeft: 'auto' }}>
+            {displayTime}
+          </Typography>
         </Stack>
       </Stack>
     </ListItemWrapper>
@@ -157,7 +149,7 @@ NotificationItem.propTypes = {
   }).isRequired,
   onItemRead: PropTypes.func,
   onItemDelete: PropTypes.func,
-  onClose: PropTypes.func,
+  onClose: PropTypes.func
 };
 
 ListItemWrapper.propTypes = {
