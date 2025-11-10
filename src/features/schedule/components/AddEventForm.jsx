@@ -128,6 +128,11 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
         } else {
           const created = await handleCreate(data);
           scheduleId = created?.scheduleId;
+
+          if (scheduleId) {
+            setSnackbar({ open: true, message: '일정이 생성되었습니다.', severity: 'success' });
+            setStatusMessage?.('일정이 생성되었습니다.');
+          }
         }
 
         if (scheduleId && values.selectedParticipants?.length > 0) {
@@ -307,7 +312,7 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
                               message: '거절 상태로 변경되었습니다.',
                               severity: 'warning'
                             });
-                            setStatusMessage?.('거절 상태로 변경되었습니다.'); // ✅ 상단 표시 추가
+                            setStatusMessage?.('거절 상태로 변경되었습니다.'); //  상단 표시 추가
                             await dispatch(getEvents(loggedInId));
                             onCancel();
                           } catch {
