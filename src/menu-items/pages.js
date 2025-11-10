@@ -15,6 +15,7 @@ import {
 } from '@tabler/icons-react';
 
 import IconBadge from '@mui/icons-material/Badge';
+import CoPresentIcon from '@mui/icons-material/CoPresent';
 
 // constant
 const icons = {
@@ -42,10 +43,10 @@ const pages = {
   type: 'group',
   children: [
     {
-      id: 'gntaegwanry',
+      id: 'attendance',
       title: '근태관리',
       type: 'item',
-      icon: icons.IconBadge,
+      icon: CoPresentIcon,
       url: '/attendance'
     },
     {
