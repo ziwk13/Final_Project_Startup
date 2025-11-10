@@ -48,7 +48,7 @@ const MainRoutes = {
         }
       ]
     },
-    {
+     {
       path: '/organization',
       element: <OrganizationPage />
     },{
@@ -79,7 +79,7 @@ const MainRoutes = {
     {
       path: '/attendance',
       element: <AttendancePage />
-    },
+    }
   ]
 };
 
