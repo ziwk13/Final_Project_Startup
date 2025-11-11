@@ -9,12 +9,13 @@ import Typography from '@mui/material/Typography';
 // project imports
 import { gridSpacing } from 'store/constant';
 
-export default function ChartHistory({ data, theme, user }) {
+export default function ChatHistory({ data, theme, user }) {
   return (
     <Grid container spacing={gridSpacing}>
       {data.map((history, index) => (
         <React.Fragment key={index}>
-          {history.from !== user.name ? (
+        {/* 상대방이 보낸 메시지 */}
+          {history.from === user.name ? (
             <Grid size={12}>
               <Grid container spacing={gridSpacing}>
                 <Grid size={2} />
@@ -46,6 +47,7 @@ export default function ChartHistory({ data, theme, user }) {
               </Grid>
             </Grid>
           ) : (
+            /* 내가 보낸 메시지 */
             <Grid size={12}>
               <Grid container spacing={gridSpacing}>
                 <Grid size={{ xs: 12, sm: 7 }}>
@@ -80,4 +82,4 @@ export default function ChartHistory({ data, theme, user }) {
   );
 }
 
-ChartHistory.propTypes = { data: PropTypes.array, theme: PropTypes.any, user: PropTypes.any };
+ChatHistory.propTypes = { data: PropTypes.array, theme: PropTypes.any, user: PropTypes.any };
