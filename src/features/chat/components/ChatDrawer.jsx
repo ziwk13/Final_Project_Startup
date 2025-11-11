@@ -2,34 +2,47 @@ import PropTypes from 'prop-types';
 import { useState } from 'react';
 
 // material-ui
-import { useColorScheme, useTheme } from '@mui/material/styles';
-import useMediaQuery from '@mui/material/useMediaQuery';
+import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
 import OutlinedInput from '@mui/material/OutlinedInput';
+import { useColorScheme, useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 // project imports
-import UserList from './UserList';
-import AvatarStatus from './AvatarStatus';
-import UserAvatar from './UserAvatar';
 import { ThemeMode } from 'config';
+import { useChat } from 'contexts/ChatContext';
 import useAuth from 'hooks/useAuth';
+import { appDrawerWidth as drawerWidth, gridSpacing } from 'store/constant';
 import MainCard from 'ui-component/cards/MainCard';
 import SimpleBar from 'ui-component/third-party/SimpleBar';
-import { appDrawerWidth as drawerWidth, gridSpacing } from 'store/constant';
+import ChatHeader from './ChatHeader';
+import ChatHistory from './ChatHistory';
+import MessageInput from './MessageInput';
+import UserAvatar from './UserAvatar';
+import UserList from './UserList';
+import { leaveRoom } from '../api/Chat';
+
 
 // assets
 import SearchTwoToneIcon from '@mui/icons-material/SearchTwoTone';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack } from '@mui/material';
+import { IconPlus } from '@tabler/icons-react';
 import useConfig from 'hooks/useConfig';
 
-export default function ChatDrawer({ handleDrawerOpen, openChatDrawer, setUser }) {
+export default function ChatDrawer({
+  handleDrawerOpen,
+  openChatDrawer,
+  onStartNewChat,
+  selectedUser,
+  isHistoryLoading,
+  chatHistoryData,
+  onSendMessage,
+  onCloseChat
+}) {
   const theme = useTheme();
   const { colorScheme } = useColorScheme();
 
@@ -38,6 +51,8 @@ export default function ChatDrawer({ handleDrawerOpen, openChatDrawer, setUser }
     state: { borderRadius }
   } = useConfig();
   const downLG = useMediaQuery(theme.breakpoints.down('lg'));
+
+  const { openChatWithUser } = useChat();
 
   // show menu to set current user status
   const [anchorEl, setAnchorEl] = useState();
@@ -56,12 +71,39 @@ export default function ChatDrawer({ handleDrawerOpen, openChatDrawer, setUser }
     handleCloseRightMenu();
   };
 
+  // 채팅방 나가기 모달 상태
+  const [leaveModalOpen, setLeaveModalOpen] = useState(false);
+
+  // 채팅방 나가기 메뉴 클릭
+  const handleLeaveClick = () => {
+    setLeaveModalOpen(true);
+  };
+
+  // 모달 닫기
+  const handleLeaveModalClose = () => {
+    setLeaveModalOpen(false);
+  };
+
+  // 모달 나가기
+  const handleConfirmLeave = async () => {
+    if (!selectedUser || !selectedUser.id) return;
+
+    try {
+      await leaveRoom(selectedUser.id);
+      handleLeaveModalClose();
+      onCloseChat();
+    } catch (error) {
+      console.error('채팅방 나가기 실패: ', error);
+      handleLeaveModalClose();
+    }
+  }
+
   return (
     <Drawer
       slotProps={{
         paper: {
           sx: {
-            height: { xs: '100%', lg: 'auto' },
+            height: { xs: '100%', lg: '100%' },
             width: drawerWidth,
             boxSizing: 'border-box',
             position: 'relative',
@@ -70,9 +112,9 @@ export default function ChatDrawer({ handleDrawerOpen, openChatDrawer, setUser }
           }
         }
       }}
-      sx={{ width: drawerWidth, flexShrink: 0, zIndex: { xs: 1100, lg: 0 } }}
+      sx={{ width: drawerWidth, flexShrink: 0, zIndex: { xs: 1100, lg: 0 }, height: '100%' }}
       variant={downLG ? 'temporary' : 'persistent'}
-      anchor="left"
+      anchor="right"
       open={openChatDrawer}
       ModalProps={{ keepMounted: true }}
       onClose={handleDrawerOpen}
@@ -83,81 +125,114 @@ export default function ChatDrawer({ handleDrawerOpen, openChatDrawer, setUser }
             height: 1,
             bgcolor: { xs: 'transparent', lg: 'grey.50' },
             borderRadius: { xs: 0, lg: `${borderRadius}px` },
-            ...theme.applyStyles('dark', { bgcolor: { lg: 'dark.main' } })
+            ...theme.applyStyles('dark', { bgcolor: { lg: 'dark.main' } }),
+            display: 'flex',
+            flexDirection: 'column'
           }}
           border={colorScheme === ThemeMode.LIGHT}
           content={false}
         >
-          <Box sx={{ p: 3, pb: 2 }}>
-            <Grid container spacing={gridSpacing}>
-              <Grid size={12}>
-                <Grid container spacing={2} sx={{ alignItems: 'center', flexWrap: 'nowrap' }}>
-                  <Grid>
-                    <UserAvatar user={{ 
-                      online_status: status, 
-                      avatar: user?.avatar || 'avatar-5.png', 
-                      name: user?.name || 'User'
-                       }} />
+          {!selectedUser ? (
+            <>
+              <Box sx={{ p: 3, pb: 2 }}>
+                <Grid container spacing={gridSpacing}>
+                  <Grid size={12}>
+                    <Grid container spacing={2} sx={{ alignItems: 'center', flexWrap: 'nowrap' }}>
+                      <Grid>
+                        <UserAvatar user={{
+                          online_status: status,
+                          avatar: user?.avatar || 'avatar-5.png',
+                          name: user?.name || 'User'
+                        }} />
+                      </Grid>
+                      <Grid size="grow">
+                        <Typography variant="h4">{user?.name} {user?.position}님</Typography>
+                      </Grid>
+                      <Grid>
+                        <IconButton onClick={onStartNewChat} size="large" aria-label="start new chat">
+                          <IconPlus />
+                        </IconButton>
+                      </Grid>
+
+                    </Grid>
                   </Grid>
-                  <Grid size="grow">
-                    <Typography variant="h4">{user?.name}</Typography>
-                  </Grid>
-                  <Grid>
-                    <IconButton onClick={handleClickRightMenu} size="large" aria-label="expandMore">
-                      <ExpandMoreIcon />
-                    </IconButton>
-                    <Menu
-                      id="simple-menu"
-                      anchorEl={anchorEl}
-                      keepMounted
-                      open={Boolean(anchorEl)}
-                      onClose={handleCloseRightMenu}
-                      anchorOrigin={{
-                        vertical: 'bottom',
-                        horizontal: 'right'
-                      }}
-                      transformOrigin={{
-                        vertical: 'top',
-                        horizontal: 'right'
-                      }}
-                    >
-                      <MenuItem onClick={handleRightMenuItemClick('available')}>
-                        <AvatarStatus status="available" mr={1} />
-                        Online
-                      </MenuItem>
-                      <MenuItem onClick={handleRightMenuItemClick('do_not_disturb')}>
-                        <AvatarStatus status="do_not_disturb" mr={1} />
-                        자리비움
-                      </MenuItem>
-                      <MenuItem onClick={handleRightMenuItemClick('offline')}>
-                        <AvatarStatus status="offline" mr={1} />
-                        자리비움
-                      </MenuItem>
-                    </Menu>
+                  <Grid size={12}>
+                    <OutlinedInput
+                      fullWidth
+                      id="input-search-header"
+                      placeholder="채팅방 검색"
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <SearchTwoToneIcon fontSize="small" />
+                        </InputAdornment>
+                      }
+                    />
                   </Grid>
                 </Grid>
-              </Grid>
-              <Grid size={12}>
-                <OutlinedInput
-                  fullWidth
-                  id="input-search-header"
-                  placeholder="Search Mail"
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <SearchTwoToneIcon fontSize="small" />
-                    </InputAdornment>
-                  }
+              </Box>
+              <SimpleBar
+                sx={{
+                  overflowX: 'hidden',
+                  flex: 1,
+                  '& .simplebar-content': { height: '100%' }
+                }}
+              >
+                <Box sx={{ p: 3, pt: 0 }}>
+                  <UserList setUser={openChatWithUser} />
+                </Box>
+              </SimpleBar>
+            </>
+          ) : (
+            <>
+              <Box sx={{ p: 3, pb: 2 }}>
+                <ChatHeader
+                  user={selectedUser}
+                  onClose={onCloseChat}
+                  onLeaveRoom={handleLeaveClick}
                 />
-              </Grid>
-            </Grid>
-          </Box>
-          <SimpleBar
-            sx={{ overflowX: 'hidden', height: downLG ? 'calc(100vh - 190px)' : 'calc(100vh - 440px)', minHeight: downLG ? 0 : 536 }}
-          >
-            <Box sx={{ p: 3, pt: 0 }}>
-              <UserList setUser={setUser} />
-            </Box>
-          </SimpleBar>
+              </Box>
+              <SimpleBar
+                sx={{ overflowX: 'hidden', flex: 1, minHeight: 300, '& .simplebar-content': { height: 1 } }}
+              >
+                <Box sx={{ height: 1, p: 2 }}>
+                  {isHistoryLoading ? (
+                    <Stack />
+                  ) : (
+                    <ChatHistory theme={theme} user={selectedUser} data={chatHistoryData} />
+                  )}
+                </Box>
+              </SimpleBar>
+              <Box sx={{ p: 2, pt: 0 }}>
+                <MessageInput onSend={onSendMessage} />
+              </Box>
+
+              <Dialog
+                open={leaveModalOpen}
+                onClose={handleLeaveModalClose}
+                aria-labelledby="leave-chat-dialog-title"
+                aria-describedby="leave-chat-dialog-description"
+              >
+                <DialogTitle id="leave-chat-dialog-title">
+                  {"채팅방 나가기"}
+                </DialogTitle>
+                <DialogContent>
+                  <DialogContentText id="leave-chat-dialog-description">
+                    채팅방을 나가시겠습니까?
+                    <br />
+                    채팅방을 나가면 대화 내역이 삭제되어 복구할 수 없습니다.
+                  </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={handleConfirmLeave} color="error">
+                    나가기
+                  </Button>
+                  <Button onClick={handleLeaveModalClose} autoFocus>
+                    취소
+                  </Button>
+                  </DialogActions>
+              </Dialog>
+            </>
+          )}
         </MainCard>
       )}
     </Drawer>
@@ -165,7 +240,12 @@ export default function ChatDrawer({ handleDrawerOpen, openChatDrawer, setUser }
 }
 
 ChatDrawer.propTypes = {
-  handleDrawerOpen: PropTypes.func,
+handleDrawerOpen: PropTypes.func,
   openChatDrawer: PropTypes.oneOfType([PropTypes.bool, PropTypes.any]),
-  setUser: PropTypes.func
+  onStartNewChat: PropTypes.func,
+  selectedUser: PropTypes.object,
+  isHistoryLoading: PropTypes.bool,
+  chatHistoryData: PropTypes.array,
+  onSendMessage: PropTypes.func,
+  onCloseChat: PropTypes.func
 };
