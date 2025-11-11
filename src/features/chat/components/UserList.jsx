@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useEffect, useState, Fragment } from 'react';
+import { Fragment } from 'react';
 
 // material-ui
 import Chip from '@mui/material/Chip';
@@ -13,36 +13,12 @@ import Typography from '@mui/material/Typography';
 
 // project imports
 import UserAvatar from './UserAvatar';
-import { getRooms } from '../api/Chat';
 
-export default function UserList({ setUser }) {
-  const [data, setData] = useState([]);
-
-  useEffect(() => {
-    const fetchChatRooms = async () => {
-      try {
-        const rooms = await getRooms();
-
-        const mappedData = rooms.map(room => ({
-          id: room.chatRoomId,
-          name: room.name,
-          avatar: room.profile,
-          lastMessage: room.lastMessage,
-          unReadChatCount: room.unreadCount,
-          online_status: 'available'
-        }));
-
-        setData(mappedData);
-      } catch (error) {
-        // API에서 에러 메시지 호출
-      }
-    };
-    fetchChatRooms();
-  }, []);
+export default function UserList({ users, setUser }) {
 
   return (
     <List component="nav">
-      {data.map((user) => (
+      {users.map((user) => (
         <Fragment key={user.id}>
           <ListItemButton onClick={() => setUser(user)}>
             <ListItemAvatar>
@@ -98,4 +74,8 @@ export default function UserList({ setUser }) {
   );
 }
 
-UserList.propTypes = { setUser: PropTypes.func };
+UserList.propTypes = { 
+  users: PropTypes.array,
+  setUser: PropTypes.func
+ };
+  
