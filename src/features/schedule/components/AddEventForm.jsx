@@ -122,8 +122,7 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
     if (!selected.length) return;
 
     const merged = [...values.selectedParticipants, ...selected];
-    const unique = merged.filter((emp, idx, arr) => idx === arr.findIndex((e) => Number(e.employeeId) === Number(emp.employeeId)));
-
+    const unique = merged.filter((emp, idx, arr) => idx === arr.findIndex((e) => e.employeeId === emp.employeeId));
     if (isCreating || isHost) setFieldValue('selectedParticipants', unique);
   }, [orgList]);
 
@@ -134,9 +133,12 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
   }, [participants, loggedInId]);
 
   const EventSchema = Yup.object().shape({
-    title: Yup.string().max(255).required('Title is required'),
+    title: Yup.string().max(255).required('제목을 반드시 작성해야 합니다.'),
     content: Yup.string().max(5000),
-    endTime: Yup.date().when('startTime', (start, schema) => (start ? schema.min(start, 'End date must be later than start date') : schema))
+    endTime: Yup.date().when('startTime', (start, schema) =>
+      start ? schema.min(start, '종료일은 반드시 시작일 이후여야 합니다.') : schema
+    ),
+    categoryCode: Yup.string().required('카테고리를 반드시 선택해야 합니다.')
   });
 
   const formik = useFormik({

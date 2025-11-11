@@ -231,18 +231,40 @@ export default function Calendar() {
             initialView={view}
             initialDate={date}
             timeZone="local"
-            events={events.map((e) => ({
-              id: e.scheduleId,
-              title: e.title,
-              start: new Date(e.startTime),
-              end: new Date(e.endTime),
-              backgroundColor: e.colorCode || '#60A5FA',
-              extendedProps: {
-                content: e.content,
-                employeeId: e.employeeId,
-                categoryCode: e.categoryCode
-              }
-            }))}
+            events={events.map((e) => {
+              // 카테고리명 기준 색상
+              const categoryColorMap = {
+                회의: '#42A5F5',
+                출장: '#66BB6A',
+                휴가: '#F4A460',
+                프로젝트: '#AB47BC',
+                기타: '#9E9E9E'
+              };
+
+              const color = categoryColorMap[e.categoryName] || '#60A5FA';
+
+              return {
+                id: e.scheduleId,
+                title: e.title,
+                start: new Date(e.startTime),
+                end: new Date(e.endTime),
+                backgroundColor: color,
+                borderColor: color,
+                textColor: '#fff',
+                display: 'block',
+                extendedProps: {
+                  content: e.content,
+                  employeeId: e.employeeId,
+                  categoryName: e.categoryName
+                }
+              };
+            })}
+            eventDidMount={(info) => {
+              const color = info.event.backgroundColor;
+              info.el.style.setProperty('background-color', color, 'important');
+              info.el.style.setProperty('border-color', color, 'important');
+              info.el.style.setProperty('color', '#fff', 'important');
+            }}
             eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
             selectable
             editable
