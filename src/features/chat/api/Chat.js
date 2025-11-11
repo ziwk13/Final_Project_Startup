@@ -24,10 +24,10 @@ export const getRooms = async () => {
  * (N/A - 새 채팅 모달용)
  * 새로운 채팅방을 생성합니다.
  */
-export const createRoom = async (roomName, inviteeEmployeeIds) => {
+export const createRoom = async ({displayName, inviteeEmployeeIds}) => {
   try {
     const response = await axiosServices.post('/api/chat/rooms', {
-      roomName,
+      displayName,
       inviteeEmployeeIds
     });
     return response.data; // ChatRoomResponseDTO
