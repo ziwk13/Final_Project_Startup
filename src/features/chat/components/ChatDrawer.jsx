@@ -17,11 +17,9 @@ import { ThemeMode } from 'config';
 import { useChat } from 'contexts/ChatContext';
 import useAuth from 'hooks/useAuth';
 import { appDrawerWidth as drawerWidth, gridSpacing } from 'store/constant';
-import MainCard from 'ui-component/cards/MainCard';
 import SimpleBar from 'ui-component/third-party/SimpleBar';
 import ChatHeader from './ChatHeader';
-import ChatHistory from './ChatHistory';
-import MessageInput from './MessageInput';
+import ChatRoom from './ChatRoom';
 import UserAvatar from './UserAvatar';
 import UserList from './UserList';
 import { leaveRoom } from '../api/Chat';
@@ -38,9 +36,6 @@ export default function ChatDrawer({
   openChatDrawer,
   onStartNewChat,
   selectedUser,
-  isHistoryLoading,
-  chatHistoryData,
-  onSendMessage,
   onCloseChat
 }) {
   const theme = useTheme();
@@ -108,11 +103,19 @@ export default function ChatDrawer({
             boxSizing: 'border-box',
             position: 'relative',
             border: 'none',
-            borderRadius: { sx: 'none', lg: `${borderRadius}px` }
+            borderRadius: { sx: 'none', lg: `${borderRadius}px` },
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
           }
         }
       }}
-      sx={{ width: drawerWidth, flexShrink: 0, zIndex: { xs: 1100, lg: 0 }, height: '100%' }}
+      sx={{ 
+        width: drawerWidth, 
+        flexShrink: 0, 
+        zIndex: { xs: 1100, lg: 0 }, 
+        height: '100%' 
+      }}
       variant={downLG ? 'temporary' : 'persistent'}
       anchor="right"
       open={openChatDrawer}
@@ -120,17 +123,19 @@ export default function ChatDrawer({
       onClose={handleDrawerOpen}
     >
       {openChatDrawer && (
-        <MainCard
+        <Box
           sx={{
             height: 1,
+            minHeight: 0,
             bgcolor: { xs: 'transparent', lg: 'grey.50' },
             borderRadius: { xs: 0, lg: `${borderRadius}px` },
             ...theme.applyStyles('dark', { bgcolor: { lg: 'dark.main' } }),
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            border: colorScheme === ThemeMode.LIGHT ? '1px solid' : 'none',
+            borderColor: theme.palette.divider,
+            boxSizing: 'border-box'
           }}
-          border={colorScheme === ThemeMode.LIGHT}
-          content={false}
         >
           {!selectedUser ? (
             <>
@@ -174,7 +179,6 @@ export default function ChatDrawer({
                 sx={{
                   overflowX: 'hidden',
                   flex: 1,
-                  '& .simplebar-content': { height: '100%' }
                 }}
               >
                 <Box sx={{ p: 3, pt: 0 }}>
@@ -191,19 +195,12 @@ export default function ChatDrawer({
                   onLeaveRoom={handleLeaveClick}
                 />
               </Box>
-              <SimpleBar
-                sx={{ overflowX: 'hidden', flex: 1, minHeight: 300, '& .simplebar-content': { height: 1 } }}
-              >
-                <Box sx={{ height: 1, p: 2 }}>
-                  {isHistoryLoading ? (
-                    <Stack />
-                  ) : (
-                    <ChatHistory theme={theme} user={selectedUser} data={chatHistoryData} />
-                  )}
-                </Box>
-              </SimpleBar>
-              <Box sx={{ p: 2, pt: 0 }}>
-                <MessageInput onSend={onSendMessage} />
+              <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                <ChatRoom
+                roomId={selectedUser.id}
+                user={user}
+                theme={theme}
+                />
               </Box>
 
               <Dialog
@@ -233,7 +230,7 @@ export default function ChatDrawer({
               </Dialog>
             </>
           )}
-        </MainCard>
+        </Box>
       )}
     </Drawer>
   );
@@ -244,8 +241,5 @@ handleDrawerOpen: PropTypes.func,
   openChatDrawer: PropTypes.oneOfType([PropTypes.bool, PropTypes.any]),
   onStartNewChat: PropTypes.func,
   selectedUser: PropTypes.object,
-  isHistoryLoading: PropTypes.bool,
-  chatHistoryData: PropTypes.array,
-  onSendMessage: PropTypes.func,
   onCloseChat: PropTypes.func
 };
