@@ -5,7 +5,6 @@ import { combineReducers } from 'redux';
 import snackbarReducer from './slices/snackbar';
 import scheduleReducer from '../features/schedule/slices/scheduleSlice';
 import attendanceReducer from '../features/attendance/slices/attendanceSlice';
-import chat from './slices/chat';
 
 // ==============================|| COMBINE REDUCER ||============================== //
 
@@ -13,7 +12,6 @@ const reducer = combineReducers({
   snackbar: snackbarReducer,
   schedule: scheduleReducer,
   attendance: attendanceReducer,
-  chat: chat
 });
 
 export default reducer;
