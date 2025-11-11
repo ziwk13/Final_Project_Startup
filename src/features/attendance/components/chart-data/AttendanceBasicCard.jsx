@@ -312,7 +312,16 @@ export default function AttendanceBasicCard({ isLoading }) {
                   transformOrigin={{ vertical: 'top', horizontal: 'left' }}
                 >
                   <MenuItem onClick={() => handleWorkStatusChange('out-on-business')}>외근</MenuItem>
-                  <MenuItem onClick={() => handleWorkStatusChange('return-to-office')}>사내 복귀</MenuItem>
+                  <MenuItem
+                    onClick={() => handleWorkStatusChange('return-to-office')}
+                    disabled={today?.workStatus === 'LATE'}
+                    sx={{
+                      opacity: today?.workStatus === 'LATE' ? 0.5 : 1,
+                      pointerEvents: today?.workStatus === 'LATE' ? 'none' : 'auto'
+                    }}
+                  >
+                    사내 복귀
+                  </MenuItem>
                 </Menu>
               </Stack>
             </Stack>
