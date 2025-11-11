@@ -25,7 +25,7 @@ import { LocalizationProvider, MobileDateTimePicker } from '@mui/x-date-pickers'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import * as Yup from 'yup';
 import { useFormik, Form, FormikProvider } from 'formik';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gridSpacing } from 'store/constant';
 import DateRangeIcon from '@mui/icons-material/DateRange';
@@ -37,20 +37,16 @@ import useAuth from 'hooks/useAuth';
 
 // ==============================|| ADD / EDIT EVENT FORM ||============================== //
 
-function getInitialValues(event, range) {
-  const now = new Date();
-  const toDate = (v) => (v ? new Date(v) : null);
-  return {
-    title: event?.title || '',
-    content: event?.content || '',
-    startTime: toDate(event?.startTime) || toDate(range?.start) || now,
-    endTime: toDate(event?.endTime) || toDate(range?.end) || now,
-    selectedParticipants: []
-  };
+function toDate(v) {
+  return v ? new Date(v) : null;
 }
 
 export default function AddEventForm({ event, range, handleDelete, handleCreate, handleUpdate, onCancel, employeeId, setStatusMessage }) {
   const isCreating = !event;
+
+  // "모달을 연 순간의 now"를 고정 (enableReinitialize와 함께 안정화)
+  const openNowRef = useRef(new Date());
+
   const [employeeOptions, setEmployeeOptions] = useState([]);
   const [participants, setParticipants] = useState([]);
   const { user } = useAuth();
@@ -59,7 +55,7 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
   const navigate = useNavigate();
   const [participantStatus, setParticipantStatus] = useState(null);
 
-  //  MUI 알림 관련 상태
+  // MUI 알림 관련 상태
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [confirmDialog, setConfirmDialog] = useState({ open: false, onConfirm: null });
 
@@ -92,6 +88,32 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
     fetchParticipants();
   }, [event]);
 
+  // 카테고리 목록 (공통코드 기반)
+  const categoryOptions = [
+    { code: 'SC01', value1: 'MEETING', value2: '회의' },
+    { code: 'SC02', value1: 'BUSINESS_TRIP', value2: '출장' },
+    { code: 'SC03', value1: 'VACATION', value2: '휴가' },
+    { code: 'SC04', value1: 'PROJECT', value2: '프로젝트' },
+    { code: 'SC05', value1: 'ETC', value2: '기타 일정' }
+  ];
+
+  // initialValues를 안정화 (이 시점의 now를 고정 사용)
+  const initialValues = useMemo(() => {
+    const baseNow = openNowRef.current;
+    const start = toDate(event?.startTime) || toDate(range?.start) || baseNow;
+    const end = toDate(event?.endTime) || toDate(range?.end) || baseNow;
+
+    return {
+      title: event?.title || '',
+      content: event?.content || '',
+      startTime: start,
+      endTime: end,
+      categoryCode: '',
+      selectedParticipants: []
+    };
+  }, [event, range]);
+
+  // 참여 상태 불러오기
   useEffect(() => {
     const myStatus = participants.find((p) => p.participantEmployeeId === loggedInId)?.participantStatusName;
     setParticipantStatus(myStatus === '참석' ? 'ATTEND' : myStatus === '거절' ? 'REJECT' : null);
@@ -104,7 +126,8 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
   });
 
   const formik = useFormik({
-    initialValues: getInitialValues(event, range),
+    initialValues,
+    enableReinitialize: true,
     validationSchema: EventSchema,
     onSubmit: async (values, { resetForm, setSubmitting }) => {
       try {
@@ -112,38 +135,40 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
           title: values.title,
           content: values.content,
           startTime: values.startTime,
-          endTime: values.endTime
+          endTime: values.endTime,
+          categoryCode: values.categoryCode
         };
 
         let scheduleId;
         if (event) {
+          // **수정 모드 (Edit)**
           scheduleId = event.scheduleId || event.id;
           if (!isHost) {
             setSnackbar({ open: true, message: '이 일정은 작성자만 수정할 수 있습니다.', severity: 'warning' });
-            setStatusMessage?.('이 일정은 작성자만 수정할 수 있습니다.'); //  상단 표시 추가
+            setStatusMessage?.('이 일정은 작성자만 수정할 수 있습니다.');
             setSubmitting(false);
             return;
           }
           await handleUpdate(scheduleId, data);
+          // Edit에서는 모달 닫기를 부모가 처리
         } else {
+          // **생성 모드 (Add)**
           const created = await handleCreate(data);
           scheduleId = created?.scheduleId;
-
           if (scheduleId) {
             setSnackbar({ open: true, message: '일정이 생성되었습니다.', severity: 'success' });
             setStatusMessage?.('일정이 생성되었습니다.');
           }
+          resetForm();
+          onCancel(); // 생성 후 닫기
         }
 
         if (scheduleId && values.selectedParticipants?.length > 0) {
           const ids = values.selectedParticipants.map((p) => p.employeeId);
           await dispatch(inviteParticipants(scheduleId, ids));
         }
-
-        resetForm();
-        onCancel();
       } catch (error) {
-        console.error(error);
+        // 필요 시 에러 표시
       } finally {
         setSubmitting(false);
       }
@@ -152,12 +177,31 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
 
   const { values, errors, touched, handleSubmit, isSubmitting, getFieldProps, setFieldValue } = formik;
 
-  // 삭제 다이얼로그로 교체
+  // 카테고리 초기 동기화 (event 변경 시 1회만)
+  const catSyncedRef = useRef(false);
+  useEffect(() => {
+    catSyncedRef.current = false;
+  }, [event?.categoryCode, event?.categoryName]);
+
+  useEffect(() => {
+    if (catSyncedRef.current) return;
+    if (event?.categoryName || event?.categoryCode) {
+      const matched = categoryOptions.find(
+        (opt) => opt.value2 === event.categoryName || opt.value1 === event.categoryCode || opt.code === event.categoryCode
+      );
+      if (matched && formik.values.categoryCode !== matched.value1) {
+        formik.setFieldValue('categoryCode', matched.value1, false);
+      }
+      catSyncedRef.current = true;
+    }
+  }, [categoryOptions, event?.categoryCode, event?.categoryName, formik]);
+
+  // 삭제 다이얼로그
   const handleDeleteClick = () => {
     if (!event) return;
     if (!isHost) {
       setSnackbar({ open: true, message: '이 일정은 작성자만 삭제할 수 있습니다.', severity: 'warning' });
-      setStatusMessage?.('이 일정은 작성자만 삭제할 수 있습니다.'); // ✅ 상단 표시 추가
+      setStatusMessage?.('이 일정은 작성자만 삭제할 수 있습니다.');
       return;
     }
 
@@ -166,7 +210,7 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
       onConfirm: () => {
         handleDelete(event.scheduleId || event.id);
         setSnackbar({ open: true, message: '일정이 삭제되었습니다.', severity: 'success' });
-        setStatusMessage?.('일정이 삭제되었습니다.'); //  상단 표시 추가
+        setStatusMessage?.('일정이 삭제되었습니다.');
       }
     });
   };
@@ -220,7 +264,7 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
                 />
               </Grid>
 
-              {/* 시작 날짜 */}
+              {/* 시작/종료 */}
               <Grid size={{ xs: 12, md: 6 }}>
                 <MobileDateTimePicker
                   label="Start date"
@@ -232,7 +276,6 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
                 />
               </Grid>
 
-              {/* 종료 날짜 */}
               <Grid size={{ xs: 12, md: 6 }}>
                 <MobileDateTimePicker
                   label="End date"
@@ -244,12 +287,32 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
                 />
               </Grid>
 
+              {/* 카테고리 선택  */}
+              <Grid size={12}>
+                <Autocomplete
+                  options={categoryOptions}
+                  getOptionLabel={(option) => option.value2}
+                  value={categoryOptions.find((opt) => opt.value1 === values.categoryCode) || null}
+                  onChange={(e, val) => setFieldValue('categoryCode', val?.value1 || '')}
+                  isOptionEqualToValue={(option, value) => option.value1 === value.value1}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="카테고리 선택"
+                      placeholder="카테고리를 선택하세요"
+                      error={Boolean(touched.categoryCode && errors.categoryCode)}
+                      helperText={touched.categoryCode && errors.categoryCode}
+                    />
+                  )}
+                />
+              </Grid>
+
               {/* 참여자 목록 */}
               {!isCreating && participants.length > 0 && (
                 <Grid size={12} sx={{ mt: 2 }}>
-                  {/* 주최자가 아닌 경우에만 참석/거절 버튼 표시 */}
                   {!isHost && (
                     <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+                      {/* 참석 버튼 */}
                       <Button
                         size="small"
                         variant={participantStatus === 'ATTEND' ? 'contained' : 'outlined'}
@@ -257,10 +320,7 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
                           color: participantStatus === 'ATTEND' ? '#fff' : '#4ADE80',
                           borderColor: '#4ADE80',
                           backgroundColor: participantStatus === 'ATTEND' ? '#4ADE80' : 'transparent',
-                          '&:hover': {
-                            backgroundColor: '#4ADE80',
-                            color: '#fff'
-                          },
+                          '&:hover': { backgroundColor: '#4ADE80', color: '#fff' },
                           textTransform: 'none',
                           fontWeight: 600
                         }}
@@ -268,27 +328,21 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
                           try {
                             await dispatch(updateParticipantStatus(event.scheduleId, loggedInId, 'ATTEND'));
                             setParticipantStatus('ATTEND');
-                            setSnackbar({
-                              open: true,
-                              message: '참석 상태로 변경되었습니다.',
-                              severity: 'success'
-                            });
-                            setStatusMessage?.('참석 상태로 변경되었습니다.'); // ✅ 상단 표시 추가
+                            setSnackbar({ open: true, message: '참석 상태로 변경되었습니다.', severity: 'success' });
+                            setStatusMessage?.('참석 상태로 변경되었습니다.');
                             await dispatch(getEvents(loggedInId));
-                            onCancel();
                           } catch {
-                            setSnackbar({
-                              open: true,
-                              message: '참석 상태 변경 실패',
-                              severity: 'error'
-                            });
+                            setSnackbar({ open: true, message: '참석 상태 변경 실패', severity: 'error' });
                             setStatusMessage?.('참석 상태 변경 실패');
+                          } finally {
+                            onCancel(); // 참여 상태 변경 후 닫기
                           }
                         }}
                       >
                         참석
                       </Button>
 
+                      {/* 거절 버튼 */}
                       <Button
                         size="small"
                         variant={participantStatus === 'REJECT' ? 'contained' : 'outlined'}
@@ -296,10 +350,7 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
                           color: participantStatus === 'REJECT' ? '#fff' : '#F87171',
                           borderColor: '#F87171',
                           backgroundColor: participantStatus === 'REJECT' ? '#F87171' : 'transparent',
-                          '&:hover': {
-                            backgroundColor: '#F87171',
-                            color: '#fff'
-                          },
+                          '&:hover': { backgroundColor: '#F87171', color: '#fff' },
                           textTransform: 'none',
                           fontWeight: 600
                         }}
@@ -307,21 +358,14 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
                           try {
                             await dispatch(updateParticipantStatus(event.scheduleId, loggedInId, 'REJECT'));
                             setParticipantStatus('REJECT');
-                            setSnackbar({
-                              open: true,
-                              message: '거절 상태로 변경되었습니다.',
-                              severity: 'warning'
-                            });
-                            setStatusMessage?.('거절 상태로 변경되었습니다.'); //  상단 표시 추가
+                            setSnackbar({ open: true, message: '거절 상태로 변경되었습니다.', severity: 'warning' });
+                            setStatusMessage?.('거절 상태로 변경되었습니다.');
                             await dispatch(getEvents(loggedInId));
-                            onCancel();
                           } catch {
-                            setSnackbar({
-                              open: true,
-                              message: '거절 상태 변경 실패',
-                              severity: 'error'
-                            });
+                            setSnackbar({ open: true, message: '거절 상태 변경 실패', severity: 'error' });
                             setStatusMessage?.('거절 상태 변경 실패');
+                          } finally {
+                            onCancel();
                           }
                         }}
                       >
@@ -333,12 +377,11 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
                   <Typography variant="h6" gutterBottom>
                     참여자 목록
                   </Typography>
-
                   <List dense>
                     {participants.map((p) => (
                       <ListItem key={p.participantId}>
                         <ListItemText
-                          primary={`${p.participantName ?? p.participantName} (${
+                          primary={`${p.participantName ?? ''} (${
                             (p.participantStatusName || '').replace(/^참여\s*상태\s*-\s*/, '') || '상태 없음'
                           })`}
                         />
@@ -379,7 +422,7 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
         </Form>
       </LocalizationProvider>
 
-      {/* Snackbar (MUI Alert) */}
+      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}

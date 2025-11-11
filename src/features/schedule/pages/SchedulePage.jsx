@@ -19,10 +19,10 @@ import { getEvents, addEvent, updateEvent, deleteEvent } from '../slices/schedul
 import AddAlarmTwoToneIcon from '@mui/icons-material/AddAlarmTwoTone';
 import { format } from 'date-fns';
 import useAuth from 'hooks/useAuth';
-import { Typography, Grid, Alert } from '@mui/material';
+import { Alert, Grid } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-// 서버(LocalDateTime) 포맷: 타임존 없이 2025-11-03T15:00:00
+// 서버(LocalDateTime) 포맷
 const fmtLocal = (d) => (d ? format(new Date(d), "yyyy-MM-dd'T'HH:mm:ss") : null);
 
 export default function Calendar() {
@@ -30,22 +30,28 @@ export default function Calendar() {
   const matchSm = useMediaQuery((theme) => theme.breakpoints.down('md'));
   const { events, loading, error } = useSelector((state) => state.schedule);
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+
   const [date, setDate] = useState(new Date());
   const [view, setView] = useState(matchSm ? 'listWeek' : 'dayGridMonth');
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [statusMessage, setStatusMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState(null);
-  const [errorMessage, setErrorMessage] = useState(null);
 
   const { user } = useAuth();
   const employeeId = user?.employeeId;
 
-  // 작성자만 수정 가능하도록 하는 함수
-  const canEdit = (event) => {
-    const creatorId = event.extendedProps?.employeeId || event.employeeId;
+  // URL 단일원본
+  const modalType = searchParams.get('modal'); // 'add' | 'edit' | null
+  const modalId = searchParams.get('id');
+  const isModalOpen = Boolean(modalType);
+
+  const openAddModal = () => navigate('/schedule?modal=add', { replace: false });
+  const openEditModal = (id) => navigate(`/schedule?modal=edit&id=${id}`, { replace: false });
+  const closeModal = () => navigate('/schedule', { replace: true });
+
+  const canEdit = (evOrCalendarEvent) => {
+    const creatorId = evOrCalendarEvent?.extendedProps?.employeeId ?? evOrCalendarEvent?.employeeId ?? null;
     return Number(creatorId) === Number(employeeId);
   };
 
@@ -54,13 +60,12 @@ export default function Calendar() {
     const payload = {
       title: data.title,
       content: data.content,
-      categoryCode: data.categoryCode || 'MEETING',
+      categoryCode: data.categoryCode || 'SC01',
       employeeId: employeeId || 1,
       startTime: fmtLocal(data.startTime),
       endTime: fmtLocal(data.endTime || data.startTime),
       isDeleted: false
     };
-
     const created = await dispatch(addEvent(payload));
     return created;
   };
@@ -70,25 +75,23 @@ export default function Calendar() {
     if (employeeId) dispatch(getEvents(employeeId));
   }, [employeeId]);
 
+  // URL 파라미터와 events를 기반으로 선택 상태 세팅
   useEffect(() => {
-    const modal = searchParams.get('modal');
-    const id = searchParams.get('id');
-
-    if (!events?.length) return; // 이벤트 아직 로드 안 됐으면 대기
-
-    if (modal === 'edit' && id) {
-      const found = events.find((e) => e.scheduleId === Number(id));
-      if (found) {
-        setSelectedEvent(found);
-        setSelectedRange(null);
-        setIsModalOpen(true);
-      }
-    } else if (modal === 'add') {
+    if (!modalType) {
       setSelectedEvent(null);
       setSelectedRange(null);
-      setIsModalOpen(true);
+      return;
     }
-  }, [searchParams, events]);
+    if (modalType === 'edit' && modalId && events?.length) {
+      const found = events.find((e) => e.scheduleId === Number(modalId));
+      setSelectedEvent(found ?? null);
+      setSelectedRange(null);
+    }
+    if (modalType === 'add') {
+      setSelectedEvent(null);
+      if (!selectedRange) setSelectedRange(null);
+    }
+  }, [modalType, modalId, events]);
 
   // 날짜/뷰 제어
   const handleDateToday = () => {
@@ -128,24 +131,21 @@ export default function Calendar() {
     calendarRef.current?.getApi().unselect();
     setSelectedRange({ start: arg.start, end: arg.end });
     setSelectedEvent(null);
-    setIsModalOpen(true);
+    openAddModal();
   };
 
   // 이벤트 클릭 (모달 열기)
   const handleEventSelect = (arg) => {
-    const found = events.find((e) => e.scheduleId === Number(arg.event.id));
-    setSelectedEvent(found ?? null);
-    setSelectedRange(null);
-    setIsModalOpen(true);
-    navigate(`/schedule?modal=edit&id=${arg.event.id}`, { replace: false });
+    openEditModal(arg.event.id);
   };
 
-  // 일정 수정 (드래그, 리사이즈 포함)
-  const handleEventUpdate = (argOrId, maybeData) => {
+  // 일정 수정 (드래그, 리사이즈 포함 + 폼 저장 공통)
+  const handleEventUpdate = async (argOrId, maybeData) => {
     let scheduleId;
     let payload;
 
     if (argOrId?.event) {
+      // === 드래그/리사이즈 경로 ===
       const e = argOrId.event;
       scheduleId = Number(e.id);
       const existing = events.find((ev) => ev.scheduleId === scheduleId);
@@ -156,38 +156,37 @@ export default function Calendar() {
         return;
       }
 
+      const existingCategoryCode = existing?.categoryCode ?? e.extendedProps?.categoryCode;
+
       payload = {
-        ...existing,
-        title: e.title,
+        title: e.title ?? existing?.title,
         startTime: fmtLocal(e.start),
-        endTime: fmtLocal(e.end || e.start)
+        endTime: fmtLocal(e.end || e.start),
+        categoryCode: existingCategoryCode
       };
+
+      await dispatch(updateEvent(scheduleId, payload));
+      return;
     } else {
+      // === 폼 저장 경로 ===
       scheduleId = Number(argOrId);
       payload = {
         ...maybeData,
         startTime: fmtLocal(maybeData.startTime),
         endTime: fmtLocal(maybeData.endTime || maybeData.startTime)
+        // 폼 저장은 원래대로 categoryCode 포함
       };
     }
 
     if (!scheduleId || !payload?.startTime) return;
-    dispatch(updateEvent(scheduleId, payload));
-    handleModalClose();
+    await dispatch(updateEvent(scheduleId, payload));
+    closeModal();
   };
 
   // 일정 삭제
   const handleEventDelete = async (scheduleId) => {
     await dispatch(deleteEvent(scheduleId));
-    handleModalClose();
-  };
-
-  const handleModalClose = () => {
-    setIsModalOpen(false);
-    setSelectedEvent(null);
-    setSelectedRange(null);
-
-    navigate('/schedule', { replace: false });
+    closeModal();
   };
 
   if (loading) return <Loader />;
@@ -197,28 +196,24 @@ export default function Calendar() {
     <MainCard
       title="일정 관리"
       secondary={
-        <Button color="secondary" variant="contained" onClick={() => setIsModalOpen(true)}>
-          <AddAlarmTwoToneIcon fontSize="small" sx={{ mr: 0.75 }} />
+        <Button color="secondary" variant="contained" onClick={openAddModal}>
+          <AddAlarmTwoToneIcon fontSize="small" style={{ marginRight: 6 }} />
           일정 추가
         </Button>
       }
     >
-      <Grid container spacing={1}>
-        {errorMessage && (
-          <Grid item xs={12}>
-            <Alert severity="error" sx={{ width: '100%' }}>
-              {errorMessage}
-            </Alert>
-          </Grid>
-        )}
-        {successMessage && (
-          <Grid item xs={12}>
-            <Alert severity="success" sx={{ width: '100%' }}>
-              {successMessage}
-            </Alert>
-          </Grid>
-        )}
-      </Grid>
+      {statusMessage && (
+        <Grid item xs={12}>
+          <Alert
+            severity={
+              statusMessage.includes('실패') || statusMessage.includes('에러') || statusMessage.includes('오류') ? 'error' : 'success'
+            }
+            sx={{ width: '100%', mb: 2 }}
+          >
+            {statusMessage}
+          </Alert>
+        </Grid>
+      )}
 
       <CalendarStyled>
         <Toolbar
@@ -229,20 +224,6 @@ export default function Calendar() {
           onClickToday={handleDateToday}
           onChangeView={handleViewChange}
         />
-
-        {/* 상태 메시지 */}
-        {statusMessage && (
-          <Grid item xs={12}>
-            <Alert
-              severity={
-                statusMessage.includes('실패') || statusMessage.includes('에러') || statusMessage.includes('오류') ? 'error' : 'success'
-              }
-              sx={{ width: '100%', mb: 2 }}
-            >
-              {statusMessage}
-            </Alert>
-          </Grid>
-        )}
 
         <SubCard>
           <FullCalendar
@@ -259,14 +240,12 @@ export default function Calendar() {
               backgroundColor: e.colorCode || '#60A5FA',
               extendedProps: {
                 content: e.content,
-                employeeId: e.employeeId
+                employeeId: e.employeeId,
+                // ✅ 드래그/리사이즈 안전용: 기존 categoryCode를 함께 싣는다
+                categoryCode: e.categoryCode
               }
             }))}
-            eventTimeFormat={{
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: false
-            }}
+            eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
             selectable
             editable
             weekends
@@ -281,13 +260,13 @@ export default function Calendar() {
         </SubCard>
       </CalendarStyled>
 
-      <Dialog maxWidth="sm" fullWidth open={isModalOpen} onClose={handleModalClose} slotProps={{ paper: { sx: { p: 0 } } }}>
+      <Dialog maxWidth="sm" fullWidth open={isModalOpen} onClose={closeModal} slotProps={{ paper: { sx: { p: 0 } } }}>
         {isModalOpen && (
           <AddEventForm
             key={selectedEvent?.scheduleId ?? 'new'}
             event={selectedEvent}
             range={selectedRange}
-            onCancel={handleModalClose}
+            onCancel={closeModal}
             handleCreate={handleEventCreate}
             handleDelete={handleEventDelete}
             handleUpdate={handleEventUpdate}
