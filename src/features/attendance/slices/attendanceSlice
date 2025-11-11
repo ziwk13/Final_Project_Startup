@@ -35,7 +35,7 @@ export const clockOut = createAsyncThunk('attendance/clockOut', async (employeeI
 export const updateWorkStatus = createAsyncThunk('attendance/updateWorkStatus', async ({ employeeId, statusCode }, { rejectWithValue }) => {
   try {
     const response = await axios.put(`/api/attendances/${employeeId}/${statusCode}`);
-    return response.data.data; // OUT_ON_BUSINESS 또는 NORMAL 반환됨
+    return response.data.data;
   } catch (err) {
     return rejectWithValue(err.response?.data?.message || '근무상태 변경 실패');
   }
