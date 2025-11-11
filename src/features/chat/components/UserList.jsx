@@ -61,9 +61,6 @@ export default function UserList({ setUser }) {
                     </Typography>
                   </Grid>
                   <Grid component="span">
-                    <Typography component="span" variant="subtitle2">
-                      {user.lastMessage}
-                    </Typography>
                   </Grid>
                 </Grid>
               }
@@ -75,6 +72,7 @@ export default function UserList({ setUser }) {
                       component="span"
                       sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}
                     >
+                      {user.lastMessage}
                     </Typography>
                   </Grid>
                   <Grid component="span">
