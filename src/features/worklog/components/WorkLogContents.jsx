@@ -7,24 +7,24 @@ import {Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Checkb
 import {IconMail, IconMailOpened } from '@tabler/icons-react';
 import axiosServices from 'utils/axios';
 
-export default function MailContents({mailboxType}) {
-  const [mails, setMails] = useState([]);
+export default function WorkLogComtents({worklogType}) {
+  const [worklogs, setWorklogs] = useState([]);
 
   const navigate = useNavigate();
 
-  const handleOpenMailDetail =(mailId) => {
-    navigate(`/mail/detail/${mailId}`);  
+  const handleOpenWorklogDetail =(workLogId) => {
+    navigate(`/worklog/detail/${workLogId}`);  
   }
 
   useEffect(() => {
     axiosServices
-      .get('/api/mails', { params: { type: mailboxType } })
+      .get('/api/worklogs', { params: { type: worklogType } })
       .then((res) => {
       console.log(res.data.data.content);
-      setMails(res.data.data.content);
+      setWorklogs(res.data.data.content);
     })
       .catch(console.error);
-  }, [mailboxType]);
+  }, [worklogType]);
 
 
   return (
@@ -33,36 +33,30 @@ export default function MailContents({mailboxType}) {
         <TableHead>
           <TableRow>
             <TableCell sx={{width:"60px"}}><Checkbox color="primary" /></TableCell>
-            <TableCell sx={{width:"80px", textAlign:"center"}}><IconMail size={22} stroke={1.5}/></TableCell>
-            <TableCell sx={{width:"120px"}}>보낸 사람</TableCell>
+            <TableCell sx={{width:"120px"}}>작성자</TableCell>
             <TableCell>제목</TableCell>
-            <TableCell sx={{width:"200px"}}>받은날짜</TableCell>
+            <TableCell sx={{width:"200px"}}>업무날짜</TableCell>
+            <TableCell sx={{width:"120px"}}>업무</TableCell>
+            <TableCell sx={{width:"120px"}}>세부업무</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {mails.length === 0 ? (
+          {worklogs.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} align="center">
+              <TableCell colSpan={6} align="center">
                 <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                  메일이 없습니다.
+                  업무일지가 없습니다.
                 </Typography>
               </TableCell>
             </TableRow>
           ) : (
-            mails.map((mail) => (
-              <TableRow key={mail.mailId} hover onClick={() => handleOpenMailDetail(mail.mailId)}>
+            worklogs.map((worklog) => (
+              <TableRow key={worklog.workLogId} hover onClick={() => handleOpenWorklogDetail(worklog.workLogId)}>
                 <TableCell onClick={e => e.stopPropagation()}><Checkbox color="primary" /></TableCell>
-                <TableCell align="center">
-                  {mail.isRead ? (
-                    <IconMailOpened size={22} stroke={1.5} color="#1976d2" />
-                  ) : (
-                    <IconMail size={22} stroke={1.5}/>
-                  )}
-                </TableCell>
-                <TableCell>{mail.senderName}</TableCell>
-                <TableCell>{mail.title}</TableCell>
+                <TableCell>{worklog.employeeName}</TableCell>
+                <TableCell>{worklog.title}</TableCell>
                 <TableCell>
-                  {new Date(mail.receivedAt).toLocaleString('ko-KR', {
+                  {new Date(worklog.workDate).toLocaleString('ko-KR', {
                     year: '2-digit',
                     month: '2-digit',
                     day: '2-digit',
@@ -71,6 +65,8 @@ export default function MailContents({mailboxType}) {
                     hour12: false
                   })}
                 </TableCell>
+                <TableCell>{worklog.workTypeName}</TableCell>
+                <TableCell>{worklog.workOptionName}</TableCell>
               </TableRow>
             ))
           )}

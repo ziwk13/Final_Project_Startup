@@ -7,6 +7,8 @@ import AuthGuard from 'utils/route-guard/AuthGuard';
 import MailListPage from '../features/mail/pages/MailListPage';
 import MailWritePage from '../features/mail/pages/MailWritePage';
 import MailDetailPage from '../features/mail/pages/MailDetailPage';
+import WorkLogListPage from '../features/worklog/pages/WorkLogListPage';
+import WorkLogDetailPage from '../features/worklog/pages/WorkLogDetailPage';
 
 // sample page routing
 const SamplePage = Loadable(lazy(() => import('views/sample-page')));
@@ -79,6 +81,19 @@ const MainRoutes = {
     {
       path: '/attendance',
       element: <AttendancePage />
+    },
+    {
+      path: '/worklog',
+      children: [
+        {
+          path: 'list/:type',
+          element: <WorkLogListPage />
+        },
+        {
+          path: 'detail/:worklogId',
+          element: <WorkLogDetailPage/>
+        }
+      ]
     }
   ]
 };

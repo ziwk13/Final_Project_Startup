@@ -115,21 +115,21 @@ const pages = {
           id: 'worklog-all',
           title: '전체업무일지',
           type: 'item',
-          url: '/worklog/list',
+          url: '/worklog/list/all',
           target: false
         },
         {
           id: 'worklog-department',
           title: '부서업무일지',
           type: 'item',
-          url: '/worklog/list?type=department',
+          url: '/worklog/list/dept',
           target: false
         },
         {
           id: 'worklog-personal',
           title: '나의업무일지',
           type: 'item',
-          url: '/worklog/list?type=personal',
+          url: '/worklog/list/my',
           target: false
         }
       ]
