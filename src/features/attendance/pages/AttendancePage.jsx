@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react';
-
-// material-ui
-import Grid from '@mui/material/Grid';
-
-// project imports
+import Box from '@mui/material/Box';
 import AttendanceBasicCard from '../components/chart-data/AttendanceBasicCard';
 import AttendanceSummaryCard from '../components/AttendanceSummaryCard';
-
-import { gridSpacing } from 'store/constant';
+import AttendanceWeekViewCard from '../components/AttendanceWeekViewCard';
+import { Grid } from '@mui/material';
 
 // ==============================|| DEFAULT DASHBOARD ||============================== //
 
@@ -19,16 +15,28 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <Grid container spacing={gridSpacing}>
-      <Grid size={12}>
-        <Grid container spacing={gridSpacing}>
-          <Grid size={{ xs: 12, md: 12 }}>
-            <AttendanceBasicCard isLoading={isLoading} />
-            <AttendanceSummaryCard />
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}></Grid>
-        </Grid>
-      </Grid>
-    </Grid>
+    <Box
+      sx={{
+        p: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        flexGrow: 1,
+        overflow: 'visible'
+      }}
+    >
+      {/* 근태 카드 */}
+      <Box sx={{ flexShrink: 0 }}>
+        <AttendanceBasicCard isLoading={isLoading} />
+      </Box>
+      {/* 주간 근무 카드 */}
+      <Box item xs={12}>
+        <AttendanceWeekViewCard />
+      </Box>
+      {/* 근무 요약 카드 */}
+      <Box sx={{ flexShrink: 0 }}>
+        <AttendanceSummaryCard />
+      </Box>
+    </Box>
   );
 }

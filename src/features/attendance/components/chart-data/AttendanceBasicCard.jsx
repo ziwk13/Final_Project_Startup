@@ -13,7 +13,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 // redux
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTodayAttendance, clockIn, clockOut, updateWorkStatus } from 'features/attendance/slices/attendanceSlice';
-import { fetchWeeklyAttendance } from 'features/attendance/slices/attendanceSlice';
+import { fetchThisWeekAttendance } from 'features/attendance/slices/attendanceSlice';
 
 // project imports
 import useAuth from 'hooks/useAuth';
@@ -35,7 +35,7 @@ export default function AttendanceBasicCard({ isLoading }) {
 
   // Redux 상태
   const { today, loading } = useSelector((state) => state.attendance);
-  const { weekly } = useSelector((state) => state.attendance);
+  const { thisWeek } = useSelector((state) => state.attendance);
 
   // 로그인된 사원 ID
   const employeeId = user?.employeeId;
@@ -59,28 +59,32 @@ export default function AttendanceBasicCard({ isLoading }) {
   // 초기 렌더링 시 오늘 근태 조회
   useEffect(() => {
     if (isLoggedIn && employeeId) {
+      //  오늘 근태 조회
       dispatch(fetchTodayAttendance(employeeId));
-      dispatch(fetchWeeklyAttendance(employeeId));
 
+      //  이번 주 누적 근태 조회 (ProgressBar용)
+      dispatch(fetchThisWeekAttendance(employeeId));
+
+      //  주기적 자동 갱신 (1분마다)
       const interval = setInterval(() => {
-        dispatch(fetchWeeklyAttendance(employeeId));
+        dispatch(fetchThisWeekAttendance(employeeId));
       }, 60000);
 
       return () => clearInterval(interval);
     }
-  }, [dispatch, user]);
+  }, [dispatch, isLoggedIn, employeeId]);
 
   // 출근 / 퇴근 핸들러
   const handleClockIn = async () => {
     await dispatch(clockIn(employeeId));
     dispatch(fetchTodayAttendance(employeeId));
-    dispatch(fetchWeeklyAttendance(employeeId));
+    dispatch(fetchThisWeekAttendance(employeeId));
   };
 
   const handleClockOut = async () => {
     await dispatch(clockOut(employeeId));
     dispatch(fetchTodayAttendance(employeeId));
-    dispatch(fetchWeeklyAttendance(employeeId));
+    dispatch(fetchThisWeekAttendance(employeeId));
   };
 
   // 근무상태 변경 메뉴
@@ -141,7 +145,7 @@ export default function AttendanceBasicCard({ isLoading }) {
         <SkeletonTotalGrowthBarChart />
       ) : (
         <MainCard>
-          <Stack sx={{ gap: gridSpacing }}>
+          <Stack sx={{ gap: 1 }}>
             {/* ===== 헤더 ===== */}
             <Stack sx={{ gap: 1 }}>
               <Typography variant={isSmall ? 'h5' : 'h3'} sx={{ color: 'secondary.200' }}>
@@ -149,12 +153,11 @@ export default function AttendanceBasicCard({ isLoading }) {
               </Typography>
             </Stack>
             <Box sx={{ mt: 1, mb: 1 }}>
-              <WorkProgressBar currentMinutes={weekly?.totalMinutes || 0} targetMinutes={weekly?.targetMinutes || 2400} />
+              <WorkProgressBar currentMinutes={thisWeek?.totalMinutes || 0} targetMinutes={thisWeek?.targetMinutes || 2400} />
             </Box>
 
             <Box
               sx={{
-                mt: 2,
                 p: 2,
                 border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: '12px',

@@ -1,17 +1,21 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'utils/axios';
 
-//  오늘 근태 조회
+// ==============================
+// 🔹 오늘 근태 조회
+// ==============================
 export const fetchTodayAttendance = createAsyncThunk('attendance/fetchTodayAttendance', async (employeeId, { rejectWithValue }) => {
   try {
     const response = await axios.get(`/api/attendances/today/${employeeId}`);
     return response.data.data;
   } catch (err) {
-    return rejectWithValue(err.response?.data?.message || '조회 실패');
+    return rejectWithValue(err.response?.data?.message || '오늘 근태 조회 실패');
   }
 });
 
-//  출근 처리
+// ==============================
+// 🔹 출근 처리
+// ==============================
 export const clockIn = createAsyncThunk('attendance/clockIn', async (employeeId, { rejectWithValue }) => {
   try {
     const response = await axios.post(`/api/attendances/clock-in/${employeeId}`);
@@ -21,7 +25,9 @@ export const clockIn = createAsyncThunk('attendance/clockIn', async (employeeId,
   }
 });
 
-//  퇴근 처리
+// ==============================
+// 🔹 퇴근 처리
+// ==============================
 export const clockOut = createAsyncThunk('attendance/clockOut', async (employeeId, { rejectWithValue }) => {
   try {
     const response = await axios.post(`/api/attendances/clock-out/${employeeId}`);
@@ -31,37 +37,65 @@ export const clockOut = createAsyncThunk('attendance/clockOut', async (employeeI
   }
 });
 
-//  근무상태 변경 (외근 / 복귀)
+// ==============================
+// 🔹 근무 상태 변경 (외근 / 복귀 등)
+// ==============================
 export const updateWorkStatus = createAsyncThunk('attendance/updateWorkStatus', async ({ employeeId, statusCode }, { rejectWithValue }) => {
   try {
     const response = await axios.put(`/api/attendances/${employeeId}/${statusCode}`);
     return response.data.data;
   } catch (err) {
-    return rejectWithValue(err.response?.data?.message || '근무상태 변경 실패');
+    return rejectWithValue(err.response?.data?.message || '근무 상태 변경 실패');
   }
 });
 
-// 주간 근무시간 조회
-export const fetchWeeklyAttendance = createAsyncThunk('attendance/fetchWeeklyAttendance', async (employeeId, { rejectWithValue }) => {
+// ==============================
+// 🔹 이번 주 근태 데이터 (ProgressBar용, 항상 이번 주 고정)
+// ==============================
+export const fetchThisWeekAttendance = createAsyncThunk('attendance/fetchThisWeekAttendance', async (employeeId, { rejectWithValue }) => {
   try {
     const response = await axios.get(`/api/attendances/weekly/${employeeId}`);
+    console.log('🧩 thisWeek response:', response.data);
     return response.data.data;
   } catch (err) {
-    return rejectWithValue(err.response?.data?.message || '주간 근무시간 조회 실패');
+    return rejectWithValue(err.response?.data?.message || '이번 주 근태 조회 실패');
   }
 });
 
+// ==============================
+// 🔹 선택 주차 근태 데이터 (주간 근태표용)
+// ==============================
+export const fetchSelectedWeekAttendance = createAsyncThunk(
+  'attendance/fetchSelectedWeekAttendance',
+  async ({ employeeId, weekStart }, { rejectWithValue }) => {
+    try {
+      const params = weekStart ? { weekStart } : {};
+      const response = await axios.get(`/api/attendances/weekly/${employeeId}`, { params });
+      return response.data.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || '선택 주 근태 조회 실패');
+    }
+  }
+);
+
+// ============================================================
+// 🔹 Slice 본체
+// ============================================================
 const attendanceSlice = createSlice({
   name: 'attendance',
   initialState: {
     today: null,
+    thisWeek: { records: [], totalMinutes: 0, targetMinutes: 2400 },
+    selectedWeek: { records: [], totalMinutes: 0, targetMinutes: 2400 },
     loading: false,
     error: null
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
+      // =========================
       // 오늘 근태
+      // =========================
       .addCase(fetchTodayAttendance.pending, (state) => {
         state.loading = true;
       })
@@ -74,16 +108,19 @@ const attendanceSlice = createSlice({
         state.error = action.payload;
       })
 
-      // 출근
+      // =========================
+      // 출근 / 퇴근
+      // =========================
       .addCase(clockIn.fulfilled, (state, action) => {
         state.today = action.payload;
       })
-      // 퇴근
       .addCase(clockOut.fulfilled, (state, action) => {
         state.today = action.payload;
       })
 
-      //  근무상태 변경
+      // =========================
+      // 근무 상태 변경
+      // =========================
       .addCase(updateWorkStatus.fulfilled, (state, action) => {
         const newStatus = typeof action.payload === 'string' ? action.payload : action.payload?.workStatus;
         if (state.today) {
@@ -92,14 +129,33 @@ const attendanceSlice = createSlice({
           state.today = { workStatus: newStatus };
         }
       })
-      .addCase(fetchWeeklyAttendance.pending, (state) => {
+
+      // =========================
+      // 이번 주 (ProgressBar용)
+      // =========================
+      .addCase(fetchThisWeekAttendance.pending, (state) => {
         state.loading = true;
       })
-      .addCase(fetchWeeklyAttendance.fulfilled, (state, action) => {
-        state.weekly = action.payload;
+      .addCase(fetchThisWeekAttendance.fulfilled, (state, action) => {
         state.loading = false;
+        state.thisWeek = action.payload;
       })
-      .addCase(fetchWeeklyAttendance.rejected, (state, action) => {
+      .addCase(fetchThisWeekAttendance.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // =========================
+      // 선택 주차 (주간 근태표용)
+      // =========================
+      .addCase(fetchSelectedWeekAttendance.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchSelectedWeekAttendance.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedWeek = action.payload;
+      })
+      .addCase(fetchSelectedWeekAttendance.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

@@ -15,7 +15,7 @@ export default function WorkProgressBar({
   return (
     <Box sx={{ width: '100%', p: 1 }}>
       {/* 상단 텍스트 */}
-      <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5, color: '#F9FAFB' }}>
+      <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.3, color: '#F9FAFB' }}>
         주간누적 {currentHours}시간 {currentMins}분 / 40시간
       </Typography>
 
@@ -37,7 +37,7 @@ export default function WorkProgressBar({
         <Box
           sx={{
             width: `${percent}%`,
-            height: '100%',
+            height: '80%',
             background: percent >= 100 ? 'linear-gradient(90deg, #34D399, #10B981)' : 'linear-gradient(90deg, #3B82F6, #60A5FA)',
             borderRadius: 12,
             transition: 'width 0.6s ease'
