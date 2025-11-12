@@ -80,7 +80,15 @@ const attendanceSlice = createSlice({
     loading: false,
     error: null
   },
-  reducers: {},
+  reducers: {
+    resetAttendanceState: (state) => {
+      state.today = null;
+      state.thisWeek = null;
+      state.weekly = null;
+      state.loading = false;
+      state.error = null;
+    }
+  },
   extraReducers: (builder) => {
     builder
 
@@ -143,4 +151,5 @@ const attendanceSlice = createSlice({
   }
 });
 
+export const { resetAttendanceState } = attendanceSlice.actions;
 export default attendanceSlice.reducer;

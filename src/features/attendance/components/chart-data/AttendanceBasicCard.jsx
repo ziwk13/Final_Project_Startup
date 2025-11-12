@@ -17,7 +17,8 @@ import {
   clockIn,
   clockOut,
   updateWorkStatus,
-  fetchThisWeekAttendance
+  fetchThisWeekAttendance,
+  resetAttendanceState
 } from 'features/attendance/slices/attendanceSlice';
 
 // project imports
@@ -58,16 +59,18 @@ export default function AttendanceBasicCard({ isLoading }) {
 
   // 초기 데이터
   useEffect(() => {
-    if (isLoggedIn && employeeId) {
-      dispatch(fetchTodayAttendance(employeeId));
-      dispatch(fetchThisWeekAttendance(employeeId));
-
-      const interval = setInterval(() => {
-        dispatch(fetchThisWeekAttendance(employeeId));
-      }, 60000);
-
-      return () => clearInterval(interval);
+    if (!isLoggedIn || !employeeId) {
+      dispatch(resetAttendanceState());
+      return;
     }
+    dispatch(fetchTodayAttendance(employeeId));
+    dispatch(fetchThisWeekAttendance(employeeId));
+
+    const interval = setInterval(() => {
+      dispatch(fetchThisWeekAttendance(employeeId));
+    }, 60000);
+
+    return () => clearInterval(interval);
   }, [dispatch, user]);
 
   const handleClockIn = async () => {
