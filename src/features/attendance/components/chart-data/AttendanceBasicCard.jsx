@@ -72,7 +72,7 @@ export default function AttendanceBasicCard({ isLoading }) {
 
       return () => clearInterval(interval);
     }
-  }, [dispatch, isLoggedIn, employeeId]);
+  }, [dispatch, user]);
 
   // 출근 / 퇴근 핸들러
   const handleClockIn = async () => {
@@ -317,7 +317,7 @@ export default function AttendanceBasicCard({ isLoading }) {
                   <MenuItem onClick={() => handleWorkStatusChange('out-on-business')}>외근</MenuItem>
                   <MenuItem
                     onClick={() => handleWorkStatusChange('return-to-office')}
-                    disabled={today?.workStatus === 'LATE'}
+                    disabled={today?.workStatus === 'NORMAL' || today?.workStatus === 'LATE'}
                     sx={{
                       opacity: today?.workStatus === 'LATE' ? 0.5 : 1,
                       pointerEvents: today?.workStatus === 'LATE' ? 'none' : 'auto'

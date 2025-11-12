@@ -28,13 +28,13 @@ import { useFormik, Form, FormikProvider } from 'formik';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gridSpacing } from 'store/constant';
-import DateRangeIcon from '@mui/icons-material/DateRange';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { dispatch } from 'store';
 import axios from 'utils/axios';
 import { inviteParticipants, getEvents, updateParticipantStatus } from '../slices/scheduleSlice';
 import useAuth from 'hooks/useAuth';
 import OrganizationModal from 'features/organization/components/OrganizationModal';
+import StartAndEndDateTime from 'ui-component/date/StartAndEndDateTime';
 
 // ==============================|| ADD / EDIT EVENT FORM ||============================== //
 
@@ -51,7 +51,7 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
   const [participants, setParticipants] = useState([]);
   const { user } = useAuth();
   const loggedInId = user?.employeeId;
-  const isHost = event && Number(event.employeeId) === Number(loggedInId);
+  const isHost = event && event.employeeId === loggedInId;
   const navigate = useNavigate();
   const [participantStatus, setParticipantStatus] = useState(null);
 
@@ -232,7 +232,7 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
     <FormikProvider value={formik}>
       <LocalizationProvider dateAdapter={AdapterDateFns}>
         <Form autoComplete="off" noValidate onSubmit={handleSubmit}>
-          <DialogTitle>{event ? 'Edit Event' : 'Add Event'}</DialogTitle>
+          <DialogTitle>{event ? '일정 수정' : '일정 생성'}</DialogTitle>
           <Divider />
           <DialogContent sx={{ p: 3 }}>
             <Grid container spacing={gridSpacing}>
@@ -240,7 +240,7 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
               <Grid size={12}>
                 <TextField
                   fullWidth
-                  label="Title"
+                  label="제목"
                   {...getFieldProps('title')}
                   InputProps={{ readOnly: event && !isHost }}
                   error={Boolean(touched.title && errors.title)}
@@ -254,7 +254,7 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
                   fullWidth
                   multiline
                   rows={3}
-                  label="Description"
+                  label="일정 내용"
                   {...getFieldProps('content')}
                   InputProps={{ readOnly: event && !isHost }}
                   error={Boolean(touched.content && errors.content)}
@@ -299,25 +299,12 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
               </Grid>
 
               {/* 시작/종료 */}
-              <Grid size={{ xs: 12, md: 6 }}>
-                <MobileDateTimePicker
-                  label="Start date"
-                  value={values.startTime}
-                  format="yyyy-MM-dd HH:mm"
-                  onChange={(d) => (isCreating || isHost) && setFieldValue('startTime', d)}
-                  slots={{ openPickerIcon: () => <DateRangeIcon /> }}
-                  slotProps={{ textField: { fullWidth: true, disabled: event && !isHost } }}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 6 }}>
-                <MobileDateTimePicker
-                  label="End date"
-                  value={values.endTime}
-                  format="yyyy-MM-dd HH:mm"
-                  onChange={(d) => (isCreating || isHost) && setFieldValue('endTime', d)}
-                  slots={{ openPickerIcon: () => <DateRangeIcon /> }}
-                  slotProps={{ textField: { fullWidth: true, disabled: event && !isHost } }}
+              <Grid size={12}>
+                <StartAndEndDateTime
+                  startTime={values.startTime}
+                  setStartTime={(d) => (isCreating || isHost) && setFieldValue('startTime', d)}
+                  endTime={values.endTime}
+                  setEndTime={(d) => (isCreating || isHost) && setFieldValue('endTime', d)}
                 />
               </Grid>
 

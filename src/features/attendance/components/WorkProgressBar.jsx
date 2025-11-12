@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material';
 
 export default function WorkProgressBar({
-  currentMinutes = 0, // 이번 주 누적 근무시간 (분)
+  currentMinutes = 0, // 이번 주 누적 근무시간
   targetMinutes = 2400 // 목표 근무시간 (기본 40h)
 }) {
   const percent = Math.min((currentMinutes / targetMinutes) * 100, 100);

@@ -21,6 +21,7 @@ import { format } from 'date-fns';
 import useAuth from 'hooks/useAuth';
 import { Alert, Grid } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import koLocale from '@fullcalendar/core/locales/ko';
 
 // 서버(LocalDateTime) 포맷
 const fmtLocal = (d) => (d ? format(new Date(d), "yyyy-MM-dd'T'HH:mm:ss") : null);
@@ -42,7 +43,7 @@ export default function Calendar() {
   const employeeId = user?.employeeId;
 
   // URL 단일원본
-  const modalType = searchParams.get('modal'); // 'add' | 'edit' | null
+  const modalType = searchParams.get('modal');
   const modalId = searchParams.get('id');
   const isModalOpen = Boolean(modalType);
 
@@ -52,7 +53,7 @@ export default function Calendar() {
 
   const canEdit = (evOrCalendarEvent) => {
     const creatorId = evOrCalendarEvent?.extendedProps?.employeeId ?? evOrCalendarEvent?.employeeId ?? null;
-    return Number(creatorId) === Number(employeeId);
+    return creatorId === employeeId;
   };
 
   // 일정 생성
@@ -231,6 +232,7 @@ export default function Calendar() {
             initialView={view}
             initialDate={date}
             timeZone="local"
+            locale={koLocale}
             events={events.map((e) => {
               // 카테고리명 기준 색상
               const categoryColorMap = {

@@ -14,7 +14,7 @@ export default function AttendanceWeekViewCard({ employeeId: propEmployeeId }) {
   const { selectedWeek, loading } = useSelector((state) => state.attendance);
   const { isLoggedIn, isRefreshing, isInitialized, user } = useAuth();
 
-  //  employeeId 안정화 (useAuth에서 객체 새로 만들어도 리렌더 방지)
+  //
   const employeeId = useMemo(() => propEmployeeId || user?.employeeId, [propEmployeeId, user?.employeeId]);
 
   //  기준 주차 (월요일 시작)
@@ -25,13 +25,12 @@ export default function AttendanceWeekViewCard({ employeeId: propEmployeeId }) {
   const handleNextWeek = () => setWeekStart(dayjs(weekStart).add(7, 'day').format('YYYY-MM-DD'));
   const handleCurrentWeek = () => setWeekStart(dayjs().startOf('week').add(1, 'day').format('YYYY-MM-DD'));
 
-  //  주차 변경 시 데이터 요청 (의존성 최소화)
+  //  주차 변경 시 데이터 요청
   useEffect(() => {
     if (isInitialized && isLoggedIn && !isRefreshing && employeeId && weekStart) {
       dispatch(fetchSelectedWeekAttendance({ employeeId, weekStart }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weekStart]); // 🔥 핵심 포인트: weekStart 변경 시에만 실행
+  }, [weekStart]);
 
   // 데이터 정규화
   const records = useMemo(() => (selectedWeek?.records ? selectedWeek.records : []), [selectedWeek]);
@@ -74,9 +73,7 @@ export default function AttendanceWeekViewCard({ employeeId: propEmployeeId }) {
           color: '#9CA3AF',
           textAlign: 'center'
         }}
-      >
-        <Typography variant="body1">세션 확인 중입니다...</Typography>
-      </MainCard>
+      ></MainCard>
     );
   }
 
@@ -120,11 +117,11 @@ export default function AttendanceWeekViewCard({ employeeId: propEmployeeId }) {
             '&:hover': { textDecoration: 'none', background: 'transparent' }
           }}
         >
-          Today
+          오늘
         </Button>
       </Stack>
 
-      {/* ===== 주간 표 ===== */}
+      {/* 주간 표 */}
       <Box
         sx={{
           display: 'grid',
