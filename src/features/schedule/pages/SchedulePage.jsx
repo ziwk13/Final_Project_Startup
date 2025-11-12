@@ -19,11 +19,10 @@ import { getEvents, addEvent, updateEvent, deleteEvent } from '../slices/schedul
 import AddAlarmTwoToneIcon from '@mui/icons-material/AddAlarmTwoTone';
 import { format } from 'date-fns';
 import useAuth from 'hooks/useAuth';
-import { Alert, Grid } from '@mui/material';
+import { Alert, Grid, Box, Typography } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import koLocale from '@fullcalendar/core/locales/ko';
 
-// 서버(LocalDateTime) 포맷
 const fmtLocal = (d) => (d ? format(new Date(d), "yyyy-MM-dd'T'HH:mm:ss") : null);
 
 export default function Calendar() {
@@ -42,7 +41,6 @@ export default function Calendar() {
   const { user } = useAuth();
   const employeeId = user?.employeeId;
 
-  // URL 단일원본
   const modalType = searchParams.get('modal');
   const modalId = searchParams.get('id');
   const isModalOpen = Boolean(modalType);
@@ -56,7 +54,6 @@ export default function Calendar() {
     return creatorId === employeeId;
   };
 
-  // 일정 생성
   const handleEventCreate = async (data) => {
     const payload = {
       title: data.title,
@@ -71,12 +68,10 @@ export default function Calendar() {
     return created;
   };
 
-  // 일정 불러오기
   useEffect(() => {
     if (employeeId) dispatch(getEvents(employeeId));
   }, [employeeId]);
 
-  // URL 파라미터와 events를 기반으로 선택 상태 세팅
   useEffect(() => {
     if (!modalType) {
       setSelectedEvent(null);
@@ -94,7 +89,6 @@ export default function Calendar() {
     }
   }, [modalType, modalId, events]);
 
-  // 날짜/뷰 제어
   const handleDateToday = () => {
     const api = calendarRef.current?.getApi();
     api?.today();
@@ -127,7 +121,6 @@ export default function Calendar() {
     setDate(api?.getDate() ?? new Date());
   };
 
-  // 새 범위 선택
   const handleRangeSelect = (arg) => {
     calendarRef.current?.getApi().unselect();
     setSelectedRange({ start: arg.start, end: arg.end });
@@ -135,18 +128,15 @@ export default function Calendar() {
     openAddModal();
   };
 
-  // 이벤트 클릭 (모달 열기)
   const handleEventSelect = (arg) => {
     openEditModal(arg.event.id);
   };
 
-  // 일정 수정 (드래그, 리사이즈 포함 + 폼 저장 공통)
   const handleEventUpdate = async (argOrId, maybeData) => {
     let scheduleId;
     let payload;
 
     if (argOrId?.event) {
-      // === 드래그/리사이즈 경로 ===
       const e = argOrId.event;
       scheduleId = Number(e.id);
       const existing = events.find((ev) => ev.scheduleId === scheduleId);
@@ -169,7 +159,6 @@ export default function Calendar() {
       await dispatch(updateEvent(scheduleId, payload));
       return;
     } else {
-      // === 폼 저장 경로 ===
       scheduleId = Number(argOrId);
       payload = {
         ...maybeData,
@@ -183,7 +172,6 @@ export default function Calendar() {
     closeModal();
   };
 
-  // 일정 삭제
   const handleEventDelete = async (scheduleId) => {
     await dispatch(deleteEvent(scheduleId));
     closeModal();
@@ -196,25 +184,24 @@ export default function Calendar() {
     <MainCard
       title="일정 관리"
       secondary={
-        <Button color="secondary" variant="contained" onClick={openAddModal}>
-          <AddAlarmTwoToneIcon fontSize="small" style={{ marginRight: 6 }} />
-          일정 추가
-        </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          {statusMessage && (
+            <Alert
+              severity={
+                statusMessage.includes('실패') || statusMessage.includes('에러') || statusMessage.includes('오류') ? 'error' : 'success'
+              }
+              sx={{ p: 0.5, px: 1.5, fontSize: '0.875rem', whiteSpace: 'nowrap' }}
+            >
+              {statusMessage}
+            </Alert>
+          )}
+          <Button color="secondary" variant="contained" onClick={openAddModal}>
+            <AddAlarmTwoToneIcon fontSize="small" style={{ marginRight: 6 }} />
+            일정 추가
+          </Button>
+        </Box>
       }
     >
-      {statusMessage && (
-        <Grid item xs={12}>
-          <Alert
-            severity={
-              statusMessage.includes('실패') || statusMessage.includes('에러') || statusMessage.includes('오류') ? 'error' : 'success'
-            }
-            sx={{ width: '100%', mb: 2 }}
-          >
-            {statusMessage}
-          </Alert>
-        </Grid>
-      )}
-
       <CalendarStyled>
         <Toolbar
           date={date}
@@ -234,7 +221,6 @@ export default function Calendar() {
             timeZone="local"
             locale={koLocale}
             events={events.map((e) => {
-              // 카테고리명 기준 색상
               const categoryColorMap = {
                 회의: '#42A5F5',
                 출장: '#66BB6A',
