@@ -7,7 +7,7 @@ import { Formik } from 'formik';
 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
-import StartAndEndDateTime from './StartAndEndDateTime';
+import StartAndEndDateTime from 'ui-component/date/StartAndEndDateTime';
 import AttachmentDropzone from 'ui-component/extended/AttachmentDropzone';
 
 // react
