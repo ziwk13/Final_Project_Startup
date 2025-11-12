@@ -18,7 +18,6 @@ import { getImageUrl, ImagePath } from 'utils/getImageUrl';
 
 // assets
 import MoreHorizTwoToneIcon from '@mui/icons-material/MoreHorizTwoTone';
-import ErrorTwoToneIcon from '@mui/icons-material/ErrorTwoTone';
 import { IconArrowLeft } from '@tabler/icons-react';
 
 // ==============================|| CHAT - HEADER ||============================== //
@@ -27,7 +26,8 @@ export default function ChatHeader({
   user, 
   onClose, 
   isUserDetailsOpen,
-  onLeaveRoom
+  onLeaveRoom,
+  onInviteClick
 }) {
   const theme = useTheme();
 
@@ -37,9 +37,16 @@ export default function ChatHeader({
     setAnchorEl(event?.currentTarget);
   };
 
+  // 메뉴 닫기
   const handleCloseSort = () => {
     setAnchorEl(null);
   };
+
+  // 초대하기 메뉴 클릭 핸들러
+  const handleInviteMenuClick = () => {
+    handleCloseSort();
+    onInviteClick();
+  }
 
   // 채팅방 나가기 클릭 핸들러
   const handleLeaveRoomClick = () => {
@@ -97,7 +104,7 @@ export default function ChatHeader({
               }}
             >
               <MenuItem onClick={handleLeaveRoomClick}>채팅방 나가기</MenuItem>
-              <MenuItem onClick={handleCloseSort}>초대하기</MenuItem>
+              <MenuItem onClick={handleInviteMenuClick}>초대하기</MenuItem>
             </Menu>
           </Grid>
         )}
@@ -109,7 +116,8 @@ export default function ChatHeader({
 
 ChatHeader.propTypes = {
   user: PropTypes.object,
-  onDrawerOpen: PropTypes.func,
-  onUserDetailsToggle: PropTypes.func,
-  isUserDetailsOpen: PropTypes.bool
+  onClose: PropTypes.func,
+  onLeaveRoom: PropTypes.func,
+  onInviteClick: PropTypes.func,
+  isUserDetailsOpen: PropTypes.bool,
 };
