@@ -1,21 +1,21 @@
 import { useEffect, useState, useTransition } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // material-ui
 import Box from '@mui/material/Box';
 import { styled, useTheme } from '@mui/material/styles';
-import useMediaQuery from '@mui/material/useMediaQuery';
 
 // third party 추후 인스톨 후 구현 예정
 // import EmojiPicker, { SkinTones } from 'emoji-picker-react';
 
 // project imports
 import { useChat } from 'contexts/ChatContext';
-import Loader from 'ui-component/Loader';
 import ChatDrawer from '../components/ChatDrawer';
 import CreateChatRoomModal from '../components/CreateChatRoomModal';
-
+import { createRoom } from '../api/Chat';
 import useAuth from 'hooks/useAuth';
 import { appDrawerWidth as drawerWidth } from 'store/constant';
+import OrganizationModal from '../../organization/components/OrganizationModal';
 
 // assets
 
@@ -44,39 +44,76 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(({
 // ==============================|| APPLICATION CHAT ||============================== //
 
 export default function ChatMainPage() {
-  const chatCtx = useChat(); // 훅 1
-  const [data, setData] = useState([]); // 훅 2
-  const [isChatLoading, startTransition] = useTransition(); // 훅 3
-  
-  
-  const { user: authUser } = useAuth(); // 훅 4
-  const theme = useTheme(); // 훅 5
-  const [emailDetails, setEmailDetails] = useState(false); // 훅 7
-  const [openChatDrawer, setOpenChatDrawer] = useState(true); // 훅 8
-  const [openCreateModal, setOpenCreateModal] = useState(false); // 훅 9
-  
+  const chatCtx = useChat();
+  const [data, setData] = useState([]);
+  const [isChatLoading, startTransition] = useTransition();
+
+
+  const { user: authUser } = useAuth();
+  const theme = useTheme();
+  const [openChatDrawer, setOpenChatDrawer] = useState(true);
+  const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [openOrgModal, setOpenOrgModal] = useState(false); // (Modal B) 사원 선택용
+  const [initialUsersForCreateModal, setInitialUsersForCreateModal] = useState([]); // Modal A에 전달할 사용자
+  const { openChatWithUser } = useChat();
+
   const user = chatCtx?.selectedUser;
   const goBackToUserList = chatCtx?.goBackToUserList;
-  
-  // set chat details page open when user is selected from sidebar
-  const handleUserChange = (event) => {
-    setEmailDetails((prev) => !prev);
-  };
 
-  // toggle sidebar
-  const handleDrawerOpen = () => {
-    setOpenChatDrawer((prevState) => !prevState);
-  };
-
-
-  // 플러스 버튼 클릭 시 실행될 핸들러
+  // 플러스 버튼 클릭 시 실행될 핸들러(조직도 모달)
   const handleStartNewChat = () => {
-    setOpenCreateModal(true);
+    setOpenOrgModal(true);
   };
 
-  // 모달 닫기 핸들러
+  // 조직도 모달 닫기 핸들러
+  const handleCloseOrgModal = () => {
+    setOpenOrgModal(false);
+  };
+
+  // 조직도 모달 적용 버튼 클릭시
+  const handleOrgModalApply = async (orgList) => {
+    const selectedEmployees = orgList[0]?.empList || [];
+    setOpenOrgModal(false);
+
+    if (selectedEmployees.length === 0) {
+      return;
+    }
+    // 1명 선택: 즉시 1:1 채팅방 생성
+    if (selectedEmployees.length === 1) {
+      const otherUser = selectedEmployees[0];
+      const finalRoomName = `${otherUser.name} ${otherUser.position}`;
+      const userIds = [otherUser.employeeId];
+
+      try {
+        const roomData = {
+          displayName: finalRoomName,
+          inviteeEmployeeIds: userIds
+        };
+        const newRoom = await createRoom(roomData);
+
+        const mappedNewRoom = {
+          id: newRoom.chatRoomId,
+          name: newRoom.name,
+          avatar: newRoom.profile,
+          lastMessage: '',
+          unReadChatCount: 0,
+          online_status: 'available'
+        };
+        openChatWithUser(mappedNewRoom)  // 생성된 채팅방으로 바로 이동
+      } catch (error) {
+        console.error("1:1 채팅방 생성 실패", error);
+      }
+    } else {
+      // 2명 이상 선택: 그룹 채팅 모달 열기
+      setInitialUsersForCreateModal(selectedEmployees);
+      setOpenCreateModal(true);
+    }
+  };
+
+  // 새 채팅방 생성 모달 닫기 핸들러
   const handleCloseCreateModal = () => {
     setOpenCreateModal(false);
+    setInitialUsersForCreateModal([]);
   };
 
   useEffect(() => {
@@ -120,7 +157,6 @@ export default function ChatMainPage() {
     <>
       <ChatDrawer
         openChatDrawer={openChatDrawer}
-        handleDrawerOpen={handleDrawerOpen} // (Drawer를 닫는 기능이 없다면 이 prop들은 불필요)
         onStartNewChat={handleStartNewChat}
 
         selectedUser={user}
@@ -132,6 +168,13 @@ export default function ChatMainPage() {
       <CreateChatRoomModal
         open={openCreateModal}
         onClose={handleCloseCreateModal}
+        preSelectedUsers={initialUsersForCreateModal}
+      />
+      <OrganizationModal
+        open={openOrgModal}
+        onClose={handleCloseOrgModal}
+        list={[{ name: '초대자', empList: [] }]}
+        setList={handleOrgModalApply}
       />
     </>
   );
