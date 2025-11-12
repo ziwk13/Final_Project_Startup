@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'store';
 import { getEvents } from 'features/schedule/slices/scheduleSlice';
 import MainCard from 'ui-component/cards/MainCard';
-import { Typography, Box, Divider } from '@mui/material';
+import { Typography, Box, Divider, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 import useAuth from 'hooks/useAuth';
@@ -39,10 +39,8 @@ export default function AttendanceScheduleCard() {
       title="이번 주 일정"
       sx={{
         height: '100%',
-        borderRadius: '16px',
-        p: 0.1,
-        background: 'rgba(255,255,255,0.03)',
-        color: '#60A5FA',
+        borderRadius: 2,
+        p: 1,
         overflowY: 'auto'
       }}
     >
@@ -59,19 +57,20 @@ export default function AttendanceScheduleCard() {
           <Box key={e.scheduleId || index} sx={{ mb: 1 }}>
             <Typography
               variant="subtitle1"
+              color="text.primary"
               sx={{
                 mb: 1,
                 cursor: 'pointer',
-                '&:hover': { color: '#60A5FA' }
+                transition: 'color 0.2s ease'
               }}
               onClick={() => navigate(`/schedule?modal=edit&id=${e.scheduleId}`)}
             >
               {e.title}
             </Typography>
-            <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
+            <Typography variant="body2" color="text.secondary">
               {dayjs(e.startTime).format('MM/DD HH:mm')} ~ {dayjs(e.endTime).format('MM/DD HH:mm')}
             </Typography>
-            {index < thisWeekEvents.length - 1 && <Divider sx={{ my: 1, borderColor: 'rgba(255,255,255,0.05)' }} />}
+            {index < thisWeekEvents.length - 1 && <Divider sx={{ my: 1 }} />}
           </Box>
         ))
       )}
