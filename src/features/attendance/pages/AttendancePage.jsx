@@ -28,7 +28,7 @@ export default function Dashboard() {
         </Box>
 
         {/* 오른쪽 일정 카드 */}
-        <Box sx={{ flex: 3 }}>
+        <Box sx={{ flex: 3, minHeight: 0 }}>
           <AttendanceScheduleCard />
         </Box>
       </Box>
