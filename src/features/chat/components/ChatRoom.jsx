@@ -9,7 +9,7 @@ export default function ChatRoom({ roomId, user, theme }) {
   const [messages, setMessages] = useState([]);
 
   const scrollContainerRef = useRef(null);
-  
+
   // useStomp 훅으로 client 객체와 연결 상태(isConnected)를 가져옴
   const { client, isConnected } = useStomp();
 
@@ -24,9 +24,10 @@ export default function ChatRoom({ roomId, user, theme }) {
         const response = await getMessages(roomId, 0, 50);
         const formattedHistory = response.content
           .map((msg) => ({
-            from: msg.senderName,
-            text: msg.content,
-            time: new Date(msg.createdAt).toLocaleTimeString()
+            employeeId: msg.employeeId,
+            senderName: msg.senderName,
+            content: msg.content,
+            createdAt: msg.createdAt,
           }))
           .reverse();
         setMessages(formattedHistory);
@@ -47,9 +48,10 @@ export default function ChatRoom({ roomId, user, theme }) {
     // 메시지 수신 시 처리할 콜백 (기존과 동일)
     const onMessageReceived = (payload) => {
       const formattedMessage = {
-        from: payload.senderName,
-        text: payload.content,
-        time: new Date().toLocaleTimeString()
+        employeeId: payload.employeeId,
+        senderName: payload.senderName,
+        content: payload.content,
+        createdAt: payload.createdAt
       };
       setMessages((prevMessages) => [...prevMessages, formattedMessage]);
     };
@@ -71,12 +73,12 @@ export default function ChatRoom({ roomId, user, theme }) {
       console.log(`ChatRoom: [${chatRoomTopic}] 구독 해제`);
     };
 
-  // 의존성 배열에 client와 isConnected 추가
+    // 의존성 배열에 client와 isConnected 추가
   }, [roomId, client, isConnected, chatRoomTopic]);
 
   // 메시지 목록이 변경될 때마다 스크롤을 맨 아래로 이동
   useEffect(() => {
-    if(scrollContainerRef.current) {
+    if (scrollContainerRef.current) {
       const container = scrollContainerRef.current;
       container.scrollTop = container.scrollHeight;
     }
@@ -94,16 +96,16 @@ export default function ChatRoom({ roomId, user, theme }) {
         body: body
       });
     } else if (!client || !isConnected) {
-        console.warn('STOMP: 연결되지 않아 메시지를 보낼 수 없습니다.');
+      console.warn('STOMP: 연결되지 않아 메시지를 보낼 수 없습니다.');
     }
   };
 
   return (
     <Paper sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* 채팅 내역 */}
-      <Box 
-      ref={scrollContainerRef}
-      sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
+      <Box
+        ref={scrollContainerRef}
+        sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
         <ChatHistory data={messages} theme={theme} user={user} />
       </Box>
 
