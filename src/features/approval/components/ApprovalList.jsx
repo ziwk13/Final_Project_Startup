@@ -12,11 +12,11 @@ import Stack from '@mui/material/Stack';
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
 import { getApprovalList } from '../api/approvalAPI';
-import CommonDataGrid from 'ui-component/CommonDataGrid';
+import CommonDataGrid from 'features/list/components/CommonDataGrid';
 import Avatar from 'ui-component/extended/Avatar';
 import DefaultAvatar from 'assets/images/profile/default_profile.png';
 import { getImageUrl } from 'api/getImageUrl';
-import GridPaginationActions from 'ui-component/GridPaginationActions';
+import GridPaginationActions from 'features/list/components/GridPaginationActions';
 
 // assets
 import { IconSearch } from '@tabler/icons-react';

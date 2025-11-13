@@ -9,7 +9,7 @@ import { DataGrid } from '@mui/x-data-grid';
 
 function CustomNoRowsOverlay() {
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'auto', minHeight: '200px' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
       <Typography>데이터가 없습니다.</Typography>
     </Box>
   );
@@ -21,8 +21,7 @@ function ErrorDisplay({ message }) {
       sx={{
         p: 3,
         textAlign: 'center',
-        height: 'auto',
-        minHeight: '200px',
+        height: '100%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
