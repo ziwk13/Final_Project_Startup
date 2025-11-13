@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Grid, Typography, Box, useTheme } from '@mui/material';
 import axios from 'api/axios';
 import MainCard from 'ui-component/cards/MainCard';
@@ -6,6 +7,7 @@ import useAuth from 'hooks/useAuth';
 
 export default function AttendanceSummaryCard() {
   const { user } = useAuth();
+  const { lastUpdated } = useSelector((state) => state.attendance);
   const [summary, setSummary] = useState({
     totalDays: 0,
     totalMinutes: 0,
@@ -22,7 +24,7 @@ export default function AttendanceSummaryCard() {
       } catch (error) {}
     };
     fetchSummary();
-  }, [user?.employeeId]);
+  }, [user?.employeeId, lastUpdated]);
 
   // 총 근무시간 포맷팅
   const hours = Math.floor(summary.totalMinutes / 60);
