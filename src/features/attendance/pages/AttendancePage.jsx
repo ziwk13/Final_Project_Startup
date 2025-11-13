@@ -1,35 +1,45 @@
 import { useEffect, useState } from 'react';
-
-// material-ui
-import Grid from '@mui/material/Grid';
-
-// project imports
+import Box from '@mui/material/Box';
 import AttendanceBasicCard from '../components/chart-data/AttendanceBasicCard';
-
-import { gridSpacing } from 'store/constant';
-
-// assets
-import StorefrontTwoToneIcon from '@mui/icons-material/StorefrontTwoTone';
-
-// ==============================|| DEFAULT DASHBOARD ||============================== //
+import AttendanceScheduleCard from '../components/AttendanceScheduleCard';
+import AttendanceWeekViewCard from '../components/AttendanceWeekViewCard';
+import AttendanceSummaryCard from '../components/AttendanceSummaryCard';
 
 export default function Dashboard() {
   const [isLoading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(false);
-  }, []);
+  useEffect(() => setLoading(false), []);
 
   return (
-    <Grid container spacing={gridSpacing}>
-      <Grid size={12}>
-        <Grid container spacing={gridSpacing}>
-          <Grid size={{ xs: 12, md: 8 }}>
-            <AttendanceBasicCard isLoading={isLoading} />
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}></Grid>
-        </Grid>
-      </Grid>
-    </Grid>
+    // ✨ 모든 섹션(Box) 사이에 일정한 수직 간격(gap: 3)을 적용합니다.
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      {/* 근태 카드 + 일정 카드 */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'row',
+          // 왼쪽 근태 카드와 오른쪽 일정 카드 사이의 수평 간격입니다.
+          gap: 2,
+          alignItems: 'stretch'
+        }}
+      >
+        {/* 왼쪽 근태 카드 */}
+        <Box sx={{ flex: 7 }}>
+          <AttendanceBasicCard isLoading={isLoading} />
+        </Box>
+
+        {/* 오른쪽 일정 카드 */}
+        <Box sx={{ flex: 3, minHeight: 0 }}>
+          <AttendanceScheduleCard />
+        </Box>
+      </Box>
+
+      <Box>
+        <AttendanceWeekViewCard />
+      </Box>
+
+      <Box>
+        <AttendanceSummaryCard />
+      </Box>
+    </Box>
   );
 }

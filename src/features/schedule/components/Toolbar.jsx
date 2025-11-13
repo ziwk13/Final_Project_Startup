@@ -55,7 +55,7 @@ export default function Toolbar({ date, view, onClickNext, onClickPrev, onClickT
     <Grid container spacing={3} {...others} sx={{ alignItems: 'center', justifyContent: 'space-between', pb: 3, ...sx }}>
       <Grid>
         <Button variant="outlined" onClick={onClickToday}>
-          Today
+          오늘
         </Button>
       </Grid>
       <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
@@ -67,7 +67,7 @@ export default function Toolbar({ date, view, onClickNext, onClickPrev, onClickT
             <IconChevronLeft />
           </IconButton>
           <Typography variant="h3" sx={{ color: 'text.primary' }}>
-            {format(date, 'MMMM yyyy')}
+            {date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' })}
           </Typography>
           <IconButton onClick={onClickNext} size="small">
             <IconChevronRight />
