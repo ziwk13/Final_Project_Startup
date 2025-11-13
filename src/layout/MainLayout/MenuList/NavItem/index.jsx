@@ -56,7 +56,15 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
 
   const Icon = item?.icon;
   const itemIcon = item?.icon ? (
-    <Icon stroke={1.5} size={drawerOpen ? '20px' : '24px'} style={{ ...(isHorizontal && isParents && { fontSize: 20, stroke: '1.5' }) }} />
+    item.id === 'attendance' ? ( // 근태관리 아이콘만 작게 표시
+      <Icon fontSize="small" />
+    ) : (
+      <Icon
+        stroke={1.5}
+        size={drawerOpen ? '20px' : '24px'}
+        style={{ ...(isHorizontal && isParents && { fontSize: 20, stroke: '1.5' }) }}
+      />
+    )
   ) : (
     <FiberManualRecordIcon sx={{ width: isSelected ? 8 : 6, height: isSelected ? 8 : 6 }} fontSize={level > 0 ? 'inherit' : 'medium'} />
   );

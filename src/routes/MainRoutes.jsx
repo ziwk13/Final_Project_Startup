@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import { Navigate } from 'react-router-dom';
 
 // project imports
 import MainLayout from 'layout/MainLayout';
@@ -11,7 +12,6 @@ import WorkLogListPage from '../features/worklog/pages/WorkLogListPage';
 import WorkLogDetailPage from '../features/worklog/pages/WorkLogDetailPage';
 
 // sample page routing
-const SamplePage = Loadable(lazy(() => import('views/sample-page')));
 const AddApprovalPage = Loadable(lazy(() => import('features/approval/pages/AddApprovalPage')));
 const ApprovalListPage = Loadable(lazy(() => import('features/approval/pages/ApprovalListPage')));
 const MyPage = Loadable(lazy(() => import('features/mypage/pages/MyInfoPage')));
@@ -29,10 +29,6 @@ const MainRoutes = {
     </AuthGuard>
   ),
   children: [
-    {
-      path: '/sample-page',
-      element: <SamplePage />
-    },
     {
       path: '/approval',
       children: [

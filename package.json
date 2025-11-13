@@ -32,6 +32,7 @@
     "chance": "1.1.13",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
+    "dayjs": "^1.11.19",
     "firebase": "12.3.0",
     "formik": "2.4.6",
     "framer-motion": "12.23.22",
