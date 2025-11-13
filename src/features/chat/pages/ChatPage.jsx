@@ -15,7 +15,7 @@ import CreateChatRoomModal from '../components/CreateChatRoomModal';
 import { createRoom } from '../api/Chat';
 import useAuth from 'hooks/useAuth';
 import { appDrawerWidth as drawerWidth } from 'store/constant';
-import OrganizationModal from '../../organization/components/OrganizationModal';
+import OrganizationModal from 'features/organization/components/OrganizationModal';
 
 // assets
 
@@ -58,10 +58,19 @@ export default function ChatMainPage() {
   const { openChatWithUser } = useChat();
 
   const user = chatCtx?.selectedUser;
+  const selectedUrl = chatCtx?.selectedUrl;
   const goBackToUserList = chatCtx?.goBackToUserList;
+  const roomIdFromUrl = selectedUrl ? selectedUrl.split('/').pop() : null;
 
   // 플러스 버튼 클릭 시 실행될 핸들러(조직도 모달)
   const handleStartNewChat = () => {
+    setInitialUsersForCreateModal([]);
+    setOpenOrgModal(true);
+  };
+
+  // 추가 초대 인원 버튼 클릭 핸들러
+  const handleAddUsers = () => {
+    setOpenCreateModal(false);
     setOpenOrgModal(true);
   };
 
@@ -75,33 +84,45 @@ export default function ChatMainPage() {
     const selectedEmployees = orgList[0]?.empList || [];
     setOpenOrgModal(false);
 
+    // 0명을 선택한 경우
     if (selectedEmployees.length === 0) {
+      // 추가 선택시
+      if (initialUsersForCreateModal.length > 0) {
+        setInitialUsersForCreateModal([]);
+        setOpenCreateModal(true);
+      }
+      // 새 채팅이었다면 그냥 닫기
       return;
     }
-    // 1명 선택: 즉시 1:1 채팅방 생성
+    // 1명 선택
     if (selectedEmployees.length === 1) {
-      const otherUser = selectedEmployees[0];
-      const finalRoomName = `${otherUser.name} ${otherUser.position}`;
-      const userIds = [otherUser.employeeId];
+      if (initialUsersForCreateModal.length > 0) {
+        setInitialUsersForCreateModal(selectedEmployees);
+        setOpenCreateModal(true);
+      } else {
+        const otherUser = selectedEmployees[0];
+        const finalRoomName = `${otherUser.name} ${otherUser.position}`;
+        const userIds = [otherUser.employeeId];
 
-      try {
-        const roomData = {
-          displayName: finalRoomName,
-          inviteeEmployeeIds: userIds
-        };
-        const newRoom = await createRoom(roomData);
+        try {
+          const roomData = {
+            displayName: finalRoomName,
+            inviteeEmployeeIds: userIds
+          };
+          const newRoom = await createRoom(roomData);
 
-        const mappedNewRoom = {
-          id: newRoom.chatRoomId,
-          name: newRoom.name,
-          avatar: newRoom.profile,
-          lastMessage: '',
-          unReadChatCount: 0,
-          online_status: 'available'
-        };
-        openChatWithUser(mappedNewRoom)  // 생성된 채팅방으로 바로 이동
-      } catch (error) {
-        console.error("1:1 채팅방 생성 실패", error);
+          const mappedNewRoom = {
+            id: newRoom.chatRoomId,
+            name: newRoom.name,
+            avatar: newRoom.profile,
+            lastMessage: '',
+            unReadChatCount: 0,
+            online_status: 'available'
+          };
+          openChatWithUser(mappedNewRoom)  // 생성된 채팅방으로 바로 이동
+        } catch (error) {
+          console.error("1:1 채팅방 생성 실패", error);
+        }
       }
     } else {
       // 2명 이상 선택: 그룹 채팅 모달 열기
@@ -160,6 +181,7 @@ export default function ChatMainPage() {
         onStartNewChat={handleStartNewChat}
 
         selectedUser={user}
+        roomId={roomIdFromUrl}
         isHistoryLoading={isChatLoading}
         chatHistoryData={data}
         onSendMessage={handleOnSend}
@@ -169,11 +191,12 @@ export default function ChatMainPage() {
         open={openCreateModal}
         onClose={handleCloseCreateModal}
         preSelectedUsers={initialUsersForCreateModal}
+        onAddUsersClick={handleAddUsers}
       />
       <OrganizationModal
         open={openOrgModal}
         onClose={handleCloseOrgModal}
-        list={[{ name: '초대자', empList: [] }]}
+        list={[{ name: '초대자', empList: initialUsersForCreateModal }]}
         setList={handleOrgModalApply}
       />
     </>
