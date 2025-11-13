@@ -34,7 +34,7 @@ import axios from 'api/axios';
 import { inviteParticipants, getEvents, updateParticipantStatus } from 'features/schedule/api/scheduleApi';
 import useAuth from 'hooks/useAuth';
 import OrganizationModal from 'features/organization/components/OrganizationModal';
-import StartAndEndDateTime from 'faetures/date/components/StartAndEndDateTime';
+import StartAndEndDateTime from 'features/date/components/StartAndEndDateTime';
 
 // ==============================|| ADD / EDIT EVENT FORM ||============================== //
 
