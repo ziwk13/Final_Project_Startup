@@ -28,7 +28,7 @@ const mapOrgUserToChatUser = (orgUser) => {
     position: orgUser.position
   };
 };
-export default function CreateChatRoomModal({ open, onClose, onSuccess, preSelectedUsers = [] }) {
+export default function CreateChatRoomModal({ open, onClose, onSuccess, preSelectedUsers = [], onAddUsersClick }) {
   // 모달 내부 상태
   const [roomName, setRoomName] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -79,7 +79,6 @@ export default function CreateChatRoomModal({ open, onClose, onSuccess, preSelec
 
       if (inviteeCategoryIndex !== -1) {
         const oldEmpList = newList[inviteeCategoryIndex].empList;
-        // TODO: mapOrgUserToChatUser의 'id'에 매핑되는 실제 키로 비교해야 합니다. (예: empId)
         const newEmpList = oldEmpList.filter((user) => user.employeeId !== userId);
 
         newList[inviteeCategoryIndex] = {
@@ -99,7 +98,7 @@ export default function CreateChatRoomModal({ open, onClose, onSuccess, preSelec
     setRoomNameError('');
     setOrgList([{ name: '초대자', empList: [] }]);
   };
-
+  
   const handleCreate = async () => {
     const userIds = selectedUsers.map((user) => user.id);
 
@@ -122,7 +121,7 @@ export default function CreateChatRoomModal({ open, onClose, onSuccess, preSelec
 
     try {
       const roomData = {
-        displayName: finalRoomName,
+        displayName: userIds.length > 1 ? finalRoomName : null,
         inviteeEmployeeIds: userIds
       };
 
@@ -130,13 +129,24 @@ export default function CreateChatRoomModal({ open, onClose, onSuccess, preSelec
 
       const newRoom = await createRoom(roomData);
 
+      let avatar = null;
+      let position = null;
+      const isTeam = selectedUsers.length > 1;
+
+      if(!isTeam) {
+        const otherUser = selectedUsers[0];
+        avatar = otherUser.avatar || null;
+        position = otherUser.position || null;
+      }
+
       const mappedNewRoom = {
         id: newRoom.chatRoomId, // (예시) 키 이름이 다를 경우
-        name: newRoom.name,
-        avatar: newRoom.profile,
+        name: finalRoomName,
+        avatar: avatar,
+        position: position,
+        isTeam: isTeam,
         lastMessage: '', // 새 방이므로
         unReadChatCount: 0,
-        online_status: 'available' // (임시)
       };
 
       // 생성된 채팅방으로 바로 이동
@@ -172,16 +182,15 @@ export default function CreateChatRoomModal({ open, onClose, onSuccess, preSelec
               helperText={roomNameError}
             />
           )}
-          {(!preSelectedUsers || preSelectedUsers.length === 0) && (
           <Button
             variant="outlined"
             fullWidth
             startIcon={<IconPlus />}
             sx={{ mb: 2 }}
+            onClick={onAddUsersClick}
           >
             초대 사원 선택
           </Button>
-          )}
 
           {/* 선택된 사용자 칩 표시 */}
           {selectedUsers.length > 0 && (
@@ -223,5 +232,6 @@ CreateChatRoomModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onSuccess: PropTypes.func,
-  preSelectedUsers: PropTypes.array
+  preSelectedUsers: PropTypes.array,
+  onAddUsersClick: PropTypes.func
 };
