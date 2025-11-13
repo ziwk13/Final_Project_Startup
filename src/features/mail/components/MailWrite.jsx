@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import AttachmentDropzone from 'features/attachment/components/AttachmentDropzone';
 
 // material-ui
@@ -25,10 +26,13 @@ function Transition(props) {
 }
 
 // 메일 API 함수 호출
-import { uploadAttachments } from '../api/mailAPI';
-import { sendMail } from '../api/mailAPI';
+import { sendMail, detailMail  } from '../api/mailAPI';
 
 export default function MailWrite() {
+	const navigate = useNavigate();
+	const {mailId} = useParams();
+	const isRewrite = !!mailId;
+
 	// 요청할 메일 정보 데이터
 	const [title, setTitle] = useState('');
 	const [content, setContent] = useState('');
@@ -59,42 +63,57 @@ export default function MailWrite() {
 	};
   }
 
-	const handleReplyClick = async () => {
+	const handleSendMail = async () => {
     const formData = new FormData();
-    attachments.forEach((file) => formData.append('files', file));
+
+    formData.append('title', title);
+    formData.append('content', content);
+    formData.append('to', to);
+    formData.append('cc', cc);
+    formData.append('bcc', bcc);
+
+    // Dropzone 파일 중 서버파일이 아닌 것만 실제 업로드
+    attachments.forEach(file => {
+      if (!file.isServerFile) {
+        formData.append('files', file);
+      }
+    });
 
     try {
-      const res = await uploadAttachments(formData);
-      console.log('✅ 업로드 성공:', res.data);
-      alert('첨부파일 업로드 성공!');
+      await sendMail(formData);
+      navigate('/mail/list/INBOX');
     } catch (err) {
-      console.error('❌ 업로드 실패:', err);
-      alert('업로드 중 오류 발생');
+      console.error(err);
+      alert('메일 발송 중 오류가 발생했습니다.');
     }
   };
 
-	const handleSendMail = async () => {
-		const formData = new FormData();
+	// 재작성일 때: 기존 메일 detail 불러오기
+  useEffect(() => {
+    if (!isRewrite) return;
 
-		// MailSendRequestDTO 필드 (임의 값)
-		formData.append('title', title);
-		formData.append('content', content);
-		formData.append('to', to);
-		formData.append('cc', cc);
-		formData.append('bcc', bcc);
+    detailMail(mailId)
+      .then(res => {
+        const data = res.data.data;
 
-		// 첨부파일 (Dropzone에서 선택된 파일)
-		attachments.forEach((file) => formData.append('files', file));
+        setTitle(data.title);
+        setContent(data.content);
+        setTo(data.to?.join(', ') || '');
+        setCc(data.cc?.join(', ') || '');
+        setBcc(data.bcc?.join(', ') || '');
 
-		try {
-			const res = await sendMail(formData);
-			console.log('✅ 메일 전송 성공:', res.data);
-			alert('메일 전송 성공!');
-		} catch (err) {
-			console.error('❌ 메일 전송 실패:', err);
-			alert('메일 전송 중 오류가 발생했습니다.');
-		}
-	}
+        // 기존 첨부파일 Dropzone에 맞게 가공
+        if (data.attachments) {
+          setAttachments(
+            data.attachments.map(file => ({
+              ...file,
+              isServerFile: true // 기존 파일임 표시
+            }))
+          );
+        }
+      })
+      .catch(console.error);
+  }, [mailId]);
 
   return (
 	<Grid container spacing={gridSpacing}>
@@ -103,7 +122,7 @@ export default function MailWrite() {
 				<Grid container spacing={gridSpacing}>
 				<Grid size={12}>
 					<Box sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-					<Button variant="contained" onClick={handleSendMail}>Reply</Button>
+					<Button variant="contained" onClick={handleSendMail}>발송</Button>
 
 					<Link
 						component={RouterLink}
@@ -139,7 +158,7 @@ export default function MailWrite() {
 
 				{/* quill editor */}
 				<Grid size={12}>
-					<ReactQuill value={content} onChange = {e => setContent(e.target.value)} />
+					<ReactQuill value={content} onChange = {setContent} />
 				</Grid>
 				<Grid size={12}>
 					<AttachmentDropzone attachments={attachments} setAttachments={setAttachments} height={"150px"}/>

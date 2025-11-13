@@ -9,6 +9,7 @@ import { gridSpacing } from 'store/constant';
 import axiosServices from 'api/axios';
 import AttachmentListView from 'features/attachment/components/AttachmentListView';
 
+
 import { detailMail } from '../api/mailAPI';
 import { useParams } from 'react-router-dom';
 
@@ -55,7 +56,8 @@ export default function MailDetail() {
 						<Box>수신자 : {mail.to}</Box>
 					</Grid>
 					<Grid size={12}>
-						<Box>내용 : {mail.content}</Box>
+						<Box>내용 :</Box>
+						<Box dangerouslySetInnerHTML={{ __html: mail.content }}/>
 					</Grid>
 				</Grid>
 				{/* 메일 상세 부분 */}

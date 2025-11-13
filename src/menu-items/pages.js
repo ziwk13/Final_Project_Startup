@@ -142,13 +142,6 @@ const pages = {
           type: 'item',
           url: '/mail/list/TRASH',
           target: false
-        },
-        {
-          id: 'mail-write',
-          title: '메일작성',
-          type: 'item',
-          url: '/mail/write',
-          target: false
         }
       ]
     },
