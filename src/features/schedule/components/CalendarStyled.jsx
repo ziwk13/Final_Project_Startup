@@ -13,7 +13,6 @@ const ExperimentalStyled = styled('div')(({ theme }) => ({
     '--fc-border-color': theme.vars.palette.divider,
     '--fc-daygrid-event-dot-width': '10px',
     '--fc-list-event-dot-width': '10px',
-    '--fc-event-border-color': theme.vars.palette.primary.dark,
     '--fc-now-indicator-color': theme.vars.palette.error.main,
     color: theme.vars.palette.text.primary,
     fontFamily: theme.typography.fontFamily,
