@@ -19,9 +19,7 @@ export default function AttendanceSummaryCard() {
       try {
         const response = await axios.get(`/api/attendances/summary/${user.employeeId}`);
         setSummary(response.data.data);
-      } catch (error) {
-        console.error('근태 요약 조회 실패:', error);
-      }
+      } catch (error) {}
     };
     fetchSummary();
   }, [user?.employeeId]);
