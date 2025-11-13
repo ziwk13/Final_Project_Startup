@@ -5,7 +5,7 @@ import Badge from '@mui/material/Badge';
 
 // project imports
 import AvatarStatus from './AvatarStatus';
-import { getImageUrl, ImagePath } from 'utils/getImageUrl';
+import { getImageUrl, ImagePath } from 'api/getImageUrl';
 
 export default function UserAvatar({ user }) {
   return (
