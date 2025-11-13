@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React from 'react'; // React import 추가
+import React, { useState } from 'react'; // React import 추가
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -14,7 +14,7 @@ import Typography from '@mui/material/Typography';
 
 // project imports
 import AvatarStatus from './AvatarStatus';
-import { getImageUrl, ImagePath } from 'utils/getImageUrl';
+import { getImageUrl, ImagePath } from 'api/getImageUrl';
 
 // assets
 import MoreHorizTwoToneIcon from '@mui/icons-material/MoreHorizTwoTone';
@@ -22,9 +22,9 @@ import { IconArrowLeft } from '@tabler/icons-react';
 
 // ==============================|| CHAT - HEADER ||============================== //
 
-export default function ChatHeader({ 
-  user, 
-  onClose, 
+export default function ChatHeader({
+  user,
+  onClose,
   isUserDetailsOpen,
   onLeaveRoom,
   onInviteClick
@@ -32,7 +32,7 @@ export default function ChatHeader({
   const theme = useTheme();
 
   // 1. ChatPage에 있던 메뉴 관련 state와 핸들러를 이곳으로 가져옵니다.
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
   const handleClickSort = (event) => {
     setAnchorEl(event?.currentTarget);
   };
@@ -52,7 +52,7 @@ export default function ChatHeader({
   const handleLeaveRoomClick = () => {
     onLeaveRoom();
   };
-  
+
   return (
     <Grid size={12}>
       <Grid container spacing={0.1} sx={{ alignItems: 'center' }}>
@@ -66,23 +66,39 @@ export default function ChatHeader({
             <Grid>
               <Avatar alt={user.name} src={user.avatar && getImageUrl(`${user.avatar}`, ImagePath.USERS)} />
             </Grid>
-            <Grid size={{ sm: 'grow' }}>
+            <Grid size={{ sm: 'grow' }} sx={{ minWidth: 0 }}>
               <Grid container spacing={0} sx={{ alignItems: 'center' }}>
                 <Grid size={12}>
                   <Stack direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
-                    <Typography variant="h4">{user.name}</Typography>
-                    {user.online_status && <AvatarStatus status={user.online_status} />}
+                    <Typography variant="h4"
+                      sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        wgiteSpace: 'nowrap'
+                      }}
+                    >{user.name}
+                    </Typography>
+                    {!user.isTeam && user.online_status && <AvatarStatus status={user.online_status} />}
                   </Stack>
                 </Grid>
                 <Grid size={12}>
-                  <Typography variant="subtitle2">{user.name}</Typography>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {user.isTeam ? '팀 채팅방' : user.position}
+                  </Typography>
                 </Grid>
               </Grid>
             </Grid>
           </Grid>
         </Grid>
         <Grid size={{ sm: 'grow' }} />
-       
+
         {!isUserDetailsOpen && (
           <Grid>
             <IconButton onClick={handleClickSort} size="large" aria-label="chat user details change">
@@ -115,7 +131,13 @@ export default function ChatHeader({
 }
 
 ChatHeader.propTypes = {
-  user: PropTypes.object,
+  user: PropTypes.shape({
+    name: PropTypes.string,
+    avatar: PropTypes.string,
+    online_status: PropTypes.string,
+    position: PropTypes.string,
+    isTeam: PropTypes.bool.isRequired // isTeam을 필수로 받도록 설정
+  }),
   onClose: PropTypes.func,
   onLeaveRoom: PropTypes.func,
   onInviteClick: PropTypes.func,
