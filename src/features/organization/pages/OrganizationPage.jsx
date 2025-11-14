@@ -203,7 +203,16 @@ export default function OrganizationPage() {
   return (
     <>
       <MainCard
-        title="조직도"
+        title={
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <Button variant="outlined" color="secondary" onClick={handleNew}>
+              신규
+            </Button>
+            <Button variant="contained" color="primary" onClick={handleSave}>
+              저장
+            </Button>
+          </Stack>
+        }
         secondary={
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             {alertInfo.open && (
@@ -211,12 +220,6 @@ export default function OrganizationPage() {
                 {alertInfo.message}
               </Alert>
             )}
-            <Button variant="outlined" color="secondary" onClick={handleNew}>
-              신규
-            </Button>
-            <Button variant="contained" color="primary" onClick={handleSave}>
-              저장
-            </Button>
           </Stack>
         }
         content={false}
