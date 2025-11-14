@@ -44,14 +44,15 @@ const MainRoutes = {
         }
       ]
     },
-     {
+    {
       path: '/organization',
       element: <OrganizationPage />
     },
     {
       path: '/mypage',
       element: <MyPage />
-    },{
+    },
+    {
       path: '/mail',
       children: [
         {
@@ -64,7 +65,7 @@ const MainRoutes = {
         },
         {
           path: 'detail',
-          element: <MailDetailPage/>
+          element: <MailDetailPage />
         }
       ]
     },
@@ -76,7 +77,6 @@ const MainRoutes = {
       path: '/attendance',
       element: <AttendancePage />
     }
-    
   ]
 };
 
