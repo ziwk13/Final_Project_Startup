@@ -8,6 +8,8 @@ import AuthGuard from 'utils/route-guard/AuthGuard';
 import MailListPage from '../features/mail/pages/MailListPage';
 import MailWritePage from '../features/mail/pages/MailWritePage';
 import MailDetailPage from '../features/mail/pages/MailDetailPage';
+import WorkLogListPage from '../features/worklog/pages/WorkLogListPage';
+import WorkLogDetailPage from '../features/worklog/pages/WorkLogDetailPage';
 
 // sample page routing
 const AddApprovalPage = Loadable(lazy(() => import('features/approval/pages/AddApprovalPage')));
@@ -68,7 +70,11 @@ const MainRoutes = {
           element: <MailWritePage />
         },
         {
-          path: 'detail',
+          path :'write/:mailId',
+          element: <MailWritePage />
+        },
+        {
+          path: 'detail/:mailId',
           element: <MailDetailPage/>
         }
       ]
@@ -80,6 +86,19 @@ const MainRoutes = {
     {
       path: '/attendance',
       element: <AttendancePage />
+    },
+    {
+      path: '/worklog',
+      children: [
+        {
+          path: 'list/:type',
+          element: <WorkLogListPage />
+        },
+        {
+          path: 'detail/:worklogId',
+          element: <WorkLogDetailPage/>
+        }
+      ]
     }
     
   ]

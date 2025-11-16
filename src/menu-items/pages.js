@@ -152,20 +152,6 @@ const pages = {
           type: 'item',
           url: '/mail/list/TRASH',
           target: false
-        },
-        {
-          id: 'mail-write',
-          title: '메일작성',
-          type: 'item',
-          url: '/mail/write',
-          target: false
-        },
-        {
-          id: 'mail-detail',
-          title: '메일상세',
-          type: 'item',
-          url: '/mail/detail',
-          target: false
         }
       ]
     },
@@ -179,21 +165,21 @@ const pages = {
           id: 'worklog-all',
           title: '전체업무일지',
           type: 'item',
-          url: '/worklog/list',
+          url: '/worklog/list/all',
           target: false
         },
         {
           id: 'worklog-department',
           title: '부서업무일지',
           type: 'item',
-          url: '/worklog/list?type=department',
+          url: '/worklog/list/dept',
           target: false
         },
         {
           id: 'worklog-personal',
           title: '나의업무일지',
           type: 'item',
-          url: '/worklog/list?type=personal',
+          url: '/worklog/list/my',
           target: false
         }
       ]
