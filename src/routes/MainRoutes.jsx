@@ -11,6 +11,7 @@ import MailDetailPage from '../features/mail/pages/MailDetailPage';
 // sample page routing
 const AddApprovalPage = Loadable(lazy(() => import('features/approval/pages/AddApprovalPage')));
 const ApprovalListPage = Loadable(lazy(() => import('features/approval/pages/ApprovalListPage')));
+const ApprovalDetailPage = Loadable(lazy(() => import('features/approval/pages/ApprovalDetailPage')));
 const MyPage = Loadable(lazy(() => import('features/mypage/pages/MyInfoPage')));
 const SchedulePage = Loadable(lazy(() => import('features/schedule/pages/SchedulePage')));
 const AttendancePage = Loadable(lazy(() => import('features/attendance/pages/AttendancePage')));
@@ -39,8 +40,8 @@ const MainRoutes = {
           element: <ApprovalListPage />
         },
         {
-          path: 'detail'
-          // element: <ApprovalDetail />
+          path: 'detail/:docId',
+          element: <ApprovalDetailPage />
         }
       ]
     },
