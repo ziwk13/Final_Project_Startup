@@ -1,55 +1,83 @@
 import React, {useState, useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
-import { deleteMail, moveMail, getMailList } from '../api/mailAPI';
-
+import { deleteMail, moveMail, getMailList, detailMail } from '../api/mailAPI';
+import {IconMail, IconMailOpened } from '@tabler/icons-react';
+import { Alert } from '@mui/material';
 
 // material-ui
-import {Box, Pagination, MenuItem, Menu, Checkbox, Grid, Button} from '@mui/material';
+import {Box, Pagination, Checkbox, Grid, Button, CircularProgress} from '@mui/material';
 
 // project imports
-import MailContents from './MailContents';
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
 
 // assets
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import CommonDataGrid from '../../list/components/CommonDataGrid';
+import MailMoveDialog from './MailMoveDialog';
+import GridPaginationActions from '../../list/components/GridPaginationActions';
 
 export default function MailList({mailboxType}) {
+	const navigate = useNavigate();
 	const [selectedMailIds, setSelectedMailIds] = useState([]);		// boxId 목록
 	const [selectedMailData, setSelectedMailData] = useState([]); // mail 객체 목록
 	const [page, setPage] = useState(0);
 	const [totalPages, setTotalPages] = useState(1);
 	const [size, setSize] = useState(10);
-  const [anchorEl, setAnchorEl] = React.useState(null);
 	const [reload, setReload] = useState(false);
 	const [rows, setRows] = useState([]);
 	const [columns, setColumns] = useState([]);
+	const [moveOpen, setMoveOpen] = useState(false);		// 메일함 이동 팝업
+	const [loading, setLoading] = useState(false);
 
-	const navigate = useNavigate();
+	// Alert useState
+	const [showAlert, setShowAlert] = useState(false);
+	const [alertMessage, setAlertMessage] = useState('');
 
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-	const handleSelectedIdsChange = (ids, mailObjects) => {
-		setSelectedMailIds(ids);
-		setSelectedMailData(mailObjects || []);
+	// 페이지네비 공용 컴포넌트
+	const [rowsPerPage, setRowsPerPage] = useState(10);
+	const [data, setData] = useState({
+		content: [],
+		totalPages: 0,
+		totalElements: 0,
+		number: 0,
+		size: 10
+	});
+	const handlePageChange = (event, newPage) => {
+		setPage(newPage - 1); 
+	};
+	const handleRowsPerPageChange = (newSize) => {
+		setRowsPerPage(newSize);
+		setSize(newSize);   // 기존 size와 연결
+		setPage(0);         // 페이지 리셋
 	};
 
 	// 메일 재작성
 	const handleRewrite = () => {
-		if(selectedMailData.length !== 1) {
-			alert("재작성할 메일을 하나만 선택하세요.");
+		if(selectedMailData.length === 0) {
+			setAlertMessage("재작성 할 메일을 선택해주세요.");
+			setShowAlert(true);
+			return;
+		}
+
+		if(selectedMailData.length > 1) {
+			setAlertMessage("메일을 1개만 선택해주세요.");
+			setShowAlert(true);
 			return;
 		}
 
 		const mailId = selectedMailData[0].mailId;
 		navigate(`/mail/write/${mailId}`);
+	}
+
+	// 메일함 이동 Dialog 열기
+	const openMoveDialog = () => {
+		if(selectedMailIds.length === 0) {
+			setAlertMessage("이동할 메일을 1개 이상 선택해주세요.");
+			setShowAlert(true);
+			return;
+		}
+		setMoveOpen(true);
 	}
 	
 	// 메일함 이동
@@ -88,22 +116,42 @@ export default function MailList({mailboxType}) {
 
 	// 메일 리스트 조회
 	const loadList = () => {
+		setLoading(true);
 		getMailList(mailboxType, page, size)
 			.then((res) => {
-				const list = res.content.map((mail) => ({
-					id : mail.boxId,
-					...mail,
-					senderReceiver :
-						mailboxType === "SENT" ? mail.receivers?.join(', ') || "수신자 없음" : mail.senderName
-				}));
+				const list = res.content.map((mail) => {
+					const raw = mail.receivedAt; // "2025-11-13T15:49:22.142292" 형태
+
+					let receivedAtText = '';
+					if (raw) {
+						// 소수점 앞까지 자르기
+						const [datePart, timePartFull] = raw.split('T');        // ["2025-11-13", "15:49:22.142292"]
+						if (datePart && timePartFull) {
+							const [year, month, day] = datePart.split('-');       // ["2025","11","13"]
+							const [hour, minute] = timePartFull.split(':');       // ["15","49","22.142292"]
+							receivedAtText = `${year.slice(2)}.${month}.${day} ${hour}:${minute}`; // 25.11.13 15:49
+						} else {
+							receivedAtText = raw; // 혹시 모를 예외
+						}
+					}
+					return {
+						...mail,
+						id: mail.boxId,
+						senderReceiver: mailboxType === 'SENT' ? mail.receivers?.join(', ') || '수신자 없음' : mail.senderName,
+						receivedAtText,
+					};
+				});
+
+				console.log('rows 확인:', list[0]);
 
 				setRows(list);
 				setTotalPages(res.totalPages);
 				setSelectedMailIds([]);
 				setSelectedMailData([]);
 			})
-			.catch(console.error);
-	}
+			.catch(console.error)
+			.finally(() => setLoading(false));
+	};
 
 	// 체크박스 선택 (단일)
 	const handleSelectOne = (row) => {
@@ -128,6 +176,26 @@ export default function MailList({mailboxType}) {
 		}
 	}
 
+	// 상세페이지 이동 + 읽음 처리
+	const handleRowClick = async (params) => {
+		const mailId = params.row.mailId;
+
+		setRows((prev) =>
+			prev.map((row) =>
+				row.mailId === mailId ? { ...row, isRead: true } : row
+			)
+		);
+
+		// 서버에 읽음처리
+		try {
+			await detailMail(mailId);
+		} catch (e) {
+			console.error(e);
+		}
+
+		navigate(`/mail/detail/${mailId}`);
+	};
+
 	useEffect(() => {
 		setSelectedMailIds([]);
 		setSelectedMailData([]);
@@ -145,121 +213,184 @@ export default function MailList({mailboxType}) {
 
 	// 리스트 테이블 정의
 	useEffect(() => {
-		setColumns([
-			{
-				field: 'checkbox',
-				headerName: '',
-				width: 60,
-				sortable: false,
-				renderHeader: () => (
-					<Checkbox
-						checked={selectedMailIds.length === rows.length && rows.length > 0}
-						indeterminate={
-							selectedMailIds.length > 0 &&
-							selectedMailIds.length < rows.length
-						}
-						onChange={handleSelectAll}
-					/>
-				),
-				renderCell: (params) => (
-					<Checkbox
-						checked={selectedMailIds.includes(params.row.boxId)}
-						onClick={(e) => {
-							e.stopPropagation();
-							handleSelectOne(params.row);
-						}}
-					/>
-				)
-			},
-			{
+		const cols = [];
+
+		// 체크박스 컬럼 (항상 존재)
+		cols.push({
+			field: 'checkbox',
+			headerName: '',
+			width: 60,
+			headerAlign: 'center',
+			align: 'center',
+			headerClassName: 'checkbox-col-header',
+			cellClassName: 'checkbox-col-cell',
+			sortable: false,
+			renderHeader: () => (
+				<Checkbox
+					checked={selectedMailIds.length === rows.length && rows.length > 0}
+					// indeterminate={
+					// 	selectedMailIds.length > 0 &&
+					// 	selectedMailIds.length < rows.length
+					// }
+					onChange={handleSelectAll}
+				/>
+			),
+			renderCell: (params) => (
+				<Checkbox
+					checked={selectedMailIds.includes(params.row.boxId)}
+					onClick={(e) => {
+						e.stopPropagation();
+						handleSelectOne(params.row);
+					}}
+				/>
+			)
+		});
+
+		if (mailboxType !== 'SENT') {
+			cols.push({
 				field: 'isRead',
-				headerName: '',
+				headerName: <IconMail size={22} stroke={1.5} style={{ marginTop: '4px' }} />,
 				width: 50,
+				headerAlign: 'center',
+				align: 'center',
+				headerClassName: 'checkbox-col-header',
+				cellClassName: 'checkbox-col-cell',
+				sortable: false,
 				renderCell: (params) =>
 					params.row.isRead ? (
-						<span style={{ color: '#1976d2' }}>📨</span>
+						<IconMailOpened size={22} stroke={1.5} color="#1976d2" />
 					) : (
-						<span>✉️</span>
+						<IconMail size={22} stroke={1.5} />
 					)
-			},
+			});
+		}
+
+		cols.push(
 			{
 				field: 'senderReceiver',
 				headerName: mailboxType === 'SENT' ? '받는 사람' : '보낸 사람',
 				flex: 1,
-				minWidth: 150
+				minWidth: 150,
+				sortable: false,
 			},
-			{ field: 'title', headerName: '제목', flex: 2 },
 			{
-				field: 'receivedAt',
+				field: 'title',
+				headerName: '제목',
+				flex: 2,
+				sortable: false,
+				renderCell: (params) => (
+					<Box sx={{wordBreak:'break-all'}}>{params.value}</Box>
+				)
+			},
+			{
+				field: 'receivedAtText',
 				headerName: '받은 날짜',
 				width: 180,
-				valueFormatter: (params) =>
-					new Date(params.value).toLocaleString('ko-KR', {
-						year: '2-digit',
-						month: '2-digit',
-						day: '2-digit',
-						hour: '2-digit',
-						minute: '2-digit',
-						hour12: false
-					})
+				align: 'center',
+				sortable: false
 			}
-		]);
+		);
+
+		setColumns(cols);
 	}, [rows, selectedMailIds, mailboxType]);
 
   return (
     <MainCard
+				sx={{
+				'& .checkbox-col-cell': {
+					display:'flex !important',
+					paddingLeft: '0 !important',
+					paddingRight: '0 !important',
+					justifyContent: 'center !important',
+					alignItems: 'center !important',
+				},
+				'& .checkbox-col-header': {
+					display:'flex',
+					paddingLeft: '0 !important',
+					paddingRight: '0 !important',
+					justifyContent: 'center !important',
+					alignItems: 'center !important',
+				},
+				'& .MuiDataGrid-row:hover': {
+					cursor: 'pointer',
+				},
+				'& .MuiDataGrid-cell:focus': { outline: 'none !important' },
+				'& .MuiDataGrid-cell:focus-within': { outline: 'none !important' },
+				'& .MuiDataGrid-columnHeader:focus': { outline: 'none !important' },
+				'& .MuiDataGrid-columnHeader:focus-within': { outline: 'none !important' },
+			}}
       title={
         <Grid container spacing={gridSpacing} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{display:"flex", gap:"5px"}}>
 						<Button variant="contained" onClick={() => navigate(`/mail/write`)}>작성</Button>
 						{mailboxType === "SENT" && <Button variant="contained" onClick={handleRewrite}>재작성</Button>}
-						{mailboxType !== "MYBOX" && <Button variant="contained" onClick={() => handleMove("MYBOX")}>개인보관함으로 이동</Button>}
-						{mailboxType !== "TRASH" && <Button variant="contained" onClick={() => handleMove("TRASH")}>휴지통으로 이동</Button>}
+						<Button variant="contained" onClick={() => openMoveDialog()}>이동</Button>
 						{mailboxType === "TRASH" && <Button variant="contained" onClick={() => handleDelete("TRASH")}>영구삭제</Button>}
 					</Box>
-          <Grid>
-						<Box sx={{display:"flex"}}>
-							<Button size="large" sx={{ color: 'grey.900' }} color="secondary" endIcon={<ExpandMoreRoundedIcon />} onClick={handleClick}>
-								{size}개씩 보기
-							</Button>
-							{anchorEl && (
-								<Menu
-									id="menu-user-list-style1"
-									anchorEl={anchorEl}
-									keepMounted
-									open={Boolean(anchorEl)}
-									onClose={handleClose}
-									variant="selectedMenu"
-									anchorOrigin={{
-										vertical: 'bottom',
-										horizontal: 'right'
-									}}
-									transformOrigin={{
-										vertical: 'top',
-										horizontal: 'right'
-									}}
-								>
-									<MenuItem onClick={() => {setSize(10); setPage(0); handleClose();}}>10개씩 보기</MenuItem>
-									<MenuItem onClick={() => {setSize(20); setPage(0); handleClose();}}>20개씩 보기</MenuItem>
-									<MenuItem onClick={() => {setSize(30); setPage(0); handleClose();}}>30개씩 보기</MenuItem>
-								</Menu>
+
+					<Grid>
+						{showAlert && (
+							<Alert
+								severity={"error"}
+								onClose={() => setShowAlert(false)}
+								sx={{
+									flex: 1,
+									height: '35px',
+									py: 0,
+									display: 'flex',
+									alignItems: 'center',
+								}}
+							>
+								{alertMessage}
+							</Alert>
 							)}
-						</Box>
-          </Grid>
+					</Grid>
         </Grid>
       }
       content={false}
     >
-      {/* <CommonDataGrid rows={rows} columns={columns} loading={false} onRowClick={(params) => navigate(`/mail/detail/${params.row.mailId}`)}/> */}
-				<MailContents mailboxType = {mailboxType} onSelectedIdsChange={handleSelectedIdsChange} page={page} setPage={setPage} setTotalPages={setTotalPages} size={size} reload={reload}/>
+			{loading ? (
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'center',
+						justifyContent: 'center',
+						py: 5,
+						gap: 2
+					}}
+				>
+					<CircularProgress size={32} />
+					<Box sx={{ fontSize: 14, color: 'text.secondary' }}>불러오는 중...</Box>
+				</Box>
+			) : (
+				<>
+					<CommonDataGrid rows={rows} columns={columns} loading={loading} onRowClick={handleRowClick}/>
+					<GridPaginationActions
+						totalPages={totalPages}
+						page={page + 1}
+						onPageChange={handlePageChange}
+						rowsPerPage={rowsPerPage}
+						onRowsPerPageChange={handleRowsPerPageChange}
+						loading={loading}
+						rowsPerPageOptions={[10, 20, 30]}
+					/>
+				</>
+			)}
       
-			<Grid sx={{ p: 3 }} size={12}>
-        <Grid container spacing={gridSpacing} sx={{ justifyContent: 'center' }}>
-          <Grid>
-            <Pagination count={totalPages} page={page + 1} onChange={(e, value) => setPage(value - 1)} color="primary" />
-          </Grid>
-        </Grid>
-      </Grid>
+			
+			
+			{/* 메일함 이동 팝업 */}
+			<MailMoveDialog 
+				open={moveOpen}
+				onClose={() => setMoveOpen(false)}
+				onConfirm={async (targetType) => {
+					await handleMove(targetType);
+					setMoveOpen(false);
+				}}
+				mailboxType={mailboxType}
+			/>
     </MainCard>
+
   );
 }
