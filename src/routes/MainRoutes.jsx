@@ -8,6 +8,8 @@ import AuthGuard from 'utils/route-guard/AuthGuard';
 import MailListPage from '../features/mail/pages/MailListPage';
 import MailWritePage from '../features/mail/pages/MailWritePage';
 import MailDetailPage from '../features/mail/pages/MailDetailPage';
+import WorkLogListPage from '../features/worklog/pages/WorkLogListPage';
+import WorkLogDetailPage from '../features/worklog/pages/WorkLogDetailPage';
 
 // sample page routing
 const AddApprovalPage = Loadable(lazy(() => import('features/approval/pages/AddApprovalPage')));
@@ -17,6 +19,7 @@ const SchedulePage = Loadable(lazy(() => import('features/schedule/pages/Schedul
 const AttendancePage = Loadable(lazy(() => import('features/attendance/pages/AttendancePage')));
 const OrganizationPage = Loadable(lazy(() => import('features/organization/pages/OrganizationPage')));
 const ChatRoomPage = Loadable(lazy(() => import('features/chat/pages/ChatPage')));
+const CodePage = Loadable(lazy(() => import('features/code/pages/CodePage')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -46,6 +49,10 @@ const MainRoutes = {
       ]
     },
     {
+      path: '/code',
+      element: <CodePage />
+    },
+    {
       path: '/organization',
       element: <OrganizationPage />
     }, {
@@ -64,7 +71,11 @@ const MainRoutes = {
           element: <MailWritePage />
         },
         {
-          path: 'detail',
+          path: 'write/:mailId',
+          element: <MailWritePage />
+        },
+        {
+          path: 'detail/:mailId',
           element: <MailDetailPage />
         }
       ]
@@ -83,6 +94,19 @@ const MainRoutes = {
         {
           path: 'rooms/:roomId',
           element: <ChatRoomPage />
+        },
+      ]
+    },
+    {
+      path: '/worklog',
+      children: [
+        {
+          path: 'list/:type',
+          element: <WorkLogListPage />
+        },
+        {
+          path: 'detail/:worklogId',
+          element: <WorkLogDetailPage />
         }
       ]
     }
