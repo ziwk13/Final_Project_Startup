@@ -32,7 +32,6 @@ export const createRoom = async ({displayName, inviteeEmployeeIds}) => {
     });
     return response.data; // ChatRoomResponseDTO
   } catch (error) {
-    console.error('채팅방 생성에 실패 하였습니다. : ', error);
     throw error;
   }
 };
@@ -111,6 +110,20 @@ export const getRoomById = async (roomId) => {
     return response.data;
   } catch (error) {
     console.error("API: 채팅방 정보(ID) 가져오기 실패", error);
+    throw error;
+  }
+};
+
+/**
+ * (ChatDrawer.jsx - 채팅방 입장 시)
+ * 특정 채팅방의 모든 안 읽은 메시지를 읽음 처리합니다. (카운트를 0으로)
+ * /api/chat/rooms/{roomId}/read (PATCH) 엔드포인트를 파라미터 없이 호출합니다.
+ */
+export const markRoomAsRead = async (roomId) => {
+  try {
+    const response = await axiosServices.patch(`/api/chat/rooms/${roomId}/read`);
+    return response.data;
+  } catch (error) {
     throw error;
   }
 };
