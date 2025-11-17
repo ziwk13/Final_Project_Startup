@@ -1,9 +1,13 @@
-import React from 'react';
-import 'features/approval/components/approvalTemplate/ApprovalStyles.css';
+// 안전한 Date 파서 (마이크로초 제거)
+function safeParseDate(date) {
+  if (!date) return new Date();
+  const trimmed = typeof date === 'string' ? date.split('.')[0] : date;
+  return new Date(trimmed);
+}
 
 // 날짜
 function formatKoreanDate(date) {
-  const d = new Date(date);
+  const d = safeParseDate(date);
   const day = d.getDay();
   const week = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -13,10 +17,10 @@ function formatKoreanDate(date) {
 
   return `${year}-${month}-${dayNum}(${week[day]})`;
 }
+
 // 날짜2
 function formatDate(date) {
-  const d = new Date(date);
-  const day = d.getDay();
+  const d = safeParseDate(date);
 
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -26,15 +30,15 @@ function formatDate(date) {
 }
 
 export default function ApprovalFormHeader({ title, draftUser, draftDept, draftDate, docNo, draftPosition, approvalLines }) {
-  const safeDate = draftDate ? draftDate : new Date();
-  const displayDate = formatKoreanDate(safeDate);
-  const displayDate2 = formatDate(safeDate);
+  const displayDate = formatKoreanDate(draftDate);
+  const displayDate2 = formatDate(draftDate);
 
   let approver = null;
 
-  if (approvalLines && approvalLines.length > 0) {
-    approver = approvalLines.find((line) => line.approvalStatus?.value1 === 'AWAITING');
-  }
+  approver = [...approvalLines]
+    .reverse()
+    .find((line) => ['APPROVED', 'REJECTED', 'IN_PROGRESS', 'AWAITING', 'PENDING'].includes(line.approvalStatus?.value1));
+
   return (
     <>
       {/* 제목 */}
@@ -105,7 +109,9 @@ export default function ApprovalFormHeader({ title, draftUser, draftDept, draftD
                   <td className="sign-name-horizontal">{approver.approver.name}</td>
                 </tr>
                 <tr>
-                  <td className="sign-blank-horizontal"></td>
+                  <td className="sign-blank-horizontal" style={{ fontSize: '14px' }}>
+                    {approver.approvalDate ? formatDate(approver.approvalDate) : ''}
+                  </td>
                 </tr>
               </tbody>
             </table>

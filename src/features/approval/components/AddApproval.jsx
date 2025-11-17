@@ -27,27 +27,12 @@ import { createApproval } from '../api/approvalAPI';
 // assets
 function handleClick() {}
 
-// 날짜 포맷팅 함수
-const formatToLocalDateTimeString = (date) => {
-  const year = date.getFullYear();
-  // getMonth()는 0부터 시작하므로 +1, padStart로 2자리(0X) 보정
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-
-  // LocalDateTime (YYYY-MM-DDTHH:mm:ss) 형식 반환
-  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-};
-
 export default function AddApproval({ readOnly = false, initialData = null }) {
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const [templateValues, setTemplateValues] = useState({});
 
-  // 알림 상태
   const [alertInfo, setAlertInfo] = useState({
     open: false,
     message: '',
@@ -69,8 +54,6 @@ export default function AddApproval({ readOnly = false, initialData = null }) {
   const approvers = list.find((item) => item.name === '결재자')?.empList || [];
   const references = list.find((item) => item.name === '참조자')?.empList || [];
 
-  const [startTime, setStartTime] = useState(new Date()); // 결재 시작일
-  const [endTime, setEndTime] = useState(new Date()); // 결재 종료일
   const [selectedForm, setSelectedForm] = useState(null); // 선택한 결재 양식
   const [attachments, setAttachments] = useState([]); // 첨부파일
 
@@ -81,29 +64,50 @@ export default function AddApproval({ readOnly = false, initialData = null }) {
   useEffect(() => {
     if (!initialData) return;
 
-    // 결재 양식 (CommonCode DTO)
-    if (initialData.approvalTemplate) {
-      setSelectedForm(initialData.approvalTemplate);
+    // 템플릿 정보
+    let templateData = initialData.approvalTemplate;
+    if (!templateData && initialData.templateCode) {
+      templateData = { code: initialData.templateCode, value1: `템플릿 (${initialData.templateCode})` };
+    }
+    if (templateData) {
+      setSelectedForm(templateData);
     }
 
-    // 시작/종료일
-    if (initialData.startDate) {
-      setStartTime(new Date(initialData.startDate));
-    }
-    if (initialData.endDate) {
-      setEndTime(new Date(initialData.endDate));
+    // ===========================
+    //  AT1 : 휴가 템플릿 초기화
+    // ===========================
+    if (templateData?.code === 'AT1') {
+      setTemplateValues({
+        vacationTypeCode: initialData.vacationType?.commonCodeId || '',
+        vacationDays: initialData.vacationDays || '',
+        vacationReason: initialData.vacationReason || '',
+        startDate: initialData.startDate || '',
+        endDate: initialData.endDate || ''
+      });
     }
 
-    // 결재자 / 참조자 리스트
-    const approverEmps = initialData.approvalLines?.map((line) => line.approver) ?? [];
+    // ===========================
+    //  AT2 : 출장 템플릿 초기화
+    // ===========================
+    else if (templateData?.code === 'AT2') {
+      setTemplateValues({
+        tripLocation: initialData.tripLocation || '',
+        transportation: initialData.transportation || '',
+        tripPurpose: initialData.tripPurpose || '',
+        tripRemark: initialData.tripRemark || '',
+        startDate: initialData.startDate || '',
+        endDate: initialData.endDate || ''
+      });
+    }
+
+    // 결재선 / 참조자 초기화
+    const approverEmps = initialData.approvalLines ?? [];
     const refEmps = initialData.approvalReferences?.map((ref) => ref.referrer) ?? [];
 
     setList([
       { name: '결재자', empList: approverEmps },
       { name: '참조자', empList: refEmps }
     ]);
-
-    // 첨부파일은
   }, [initialData]);
 
   const handleFormSubmit = async (values, { setSubmitting }) => {
@@ -126,7 +130,8 @@ export default function AddApproval({ readOnly = false, initialData = null }) {
     let title = (values.title || '').trim();
     let content = (values.content || '').trim();
 
-    const templateLabel = selectedForm.value1;
+    // selectedForm이 null일 수 있으므로 null 체크 추가
+    const templateLabel = selectedForm?.value1 || '기타 양식';
 
     if (!title) {
       title = `${user?.name || '사용자'} (${user?.position}) - ${templateLabel}`;
@@ -152,10 +157,41 @@ export default function AddApproval({ readOnly = false, initialData = null }) {
       setSubmitting(false);
       return;
     }
+    for (const pair of formData.entries()) {
+      console.log(pair[0], pair[1]);
+    }
 
-    if (selectedForm && selectedForm.date) {
-      formData.append('startDate', formatToLocalDateTimeString(startTime));
-      formData.append('endDate', formatToLocalDateTimeString(endTime));
+    const templateData = templateValues || {};
+    // =======================
+    //  AT1 : 휴가 템플릿일 때
+    // =======================
+    if (selectedForm.code === 'AT1') {
+      if (templateData.vacationTypeCode) formData.append('vacationTypeCode', templateData.vacationTypeCode);
+
+      if (templateData.vacationDays) formData.append('vacationDays', templateData.vacationDays);
+
+      if (templateData.vacationReason) formData.append('vacationReason', templateData.vacationReason);
+
+      if (templateData.startDate) formData.append('startDate', templateData.startDate);
+
+      if (templateData.endDate) formData.append('endDate', templateData.endDate);
+    }
+
+    // =======================
+    //  AT2 : 출장 템플릿일 때
+    // =======================
+    if (selectedForm.code === 'AT2') {
+      if (templateData.tripLocation) formData.append('tripLocation', templateData.tripLocation);
+
+      if (templateData.transportation) formData.append('transportation', templateData.transportation);
+
+      if (templateData.tripPurpose) formData.append('tripPurpose', templateData.tripPurpose);
+
+      if (templateData.tripRemark) formData.append('tripRemark', templateData.tripRemark);
+
+      if (templateData.startDate) formData.append('startDate', templateData.startDate);
+
+      if (templateData.endDate) formData.append('endDate', templateData.endDate);
     }
 
     // 결재선(ApprovalLines) 추가
@@ -202,22 +238,24 @@ export default function AddApproval({ readOnly = false, initialData = null }) {
       setSubmitting(false);
     }
   };
-
+  const headerApprovalLines = initialData?.approvalLines || [];
+  const finalDecisionLine = headerApprovalLines
+    ?.filter((line) => ['APPROVED', 'REJECTED'].includes(line.approvalStatus?.value1))
+    ?.sort((a, b) => new Date(b.approvalDate) - new Date(a.approvalDate))[0];
   return (
     <>
+      <div style={{ marginTop: '20px' }}></div>
       <Grid container spacing={gridSpacing} sx={{ alignItems: 'flex-start' }}>
         {/* 좌측: 작성 폼 */}
         <Grid size={{ xs: 12, md: 6, lg: 9 }}>
           <ApprovalForm
             selectedForm={selectedForm}
             setSelectedForm={setSelectedForm}
-            startTime={startTime}
-            setStartTime={setStartTime}
-            endTime={endTime}
-            setEndTime={setEndTime}
             attachments={attachments}
+            approvalLines={headerApprovalLines}
             setAttachments={setAttachments}
             approvers={approvers}
+            initialData={initialData}
             references={references}
             onOpenModal={() => {
               if (!readOnly) setOpen(true);
@@ -229,19 +267,21 @@ export default function AddApproval({ readOnly = false, initialData = null }) {
               selectedForm ? (
                 <TemplateRenderer
                   template={selectedForm}
-                  approvalLines={approvers}
+                  approvalLines={headerApprovalLines}
                   approvalReferences={references}
                   templateValues={templateValues}
                   setTemplateValues={setTemplateValues}
                   readOnly={readOnly}
-                  docNo={initialData?.docNo}
+                  docNo={initialData?.docId}
                   draftUser={initialData?.creator?.name}
                   draftDept={initialData?.creator?.department}
                   draftPosition={initialData?.creator?.position}
                   draftDate={initialData?.createdAt}
+                  approvalDate={finalDecisionLine?.approvalDate}
                 />
               ) : null
             }
+            readOnly={readOnly}
           />
         </Grid>
 
@@ -259,7 +299,9 @@ export default function AddApproval({ readOnly = false, initialData = null }) {
                       </TimelineSeparator>
                       <TimelineContent sx={{ pb: index < approvers.length - 1 ? 2 : 0, pt: '6px' }}>
                         <Chip
-                          label={`${approver.name} ${approver.position}`}
+                          label={`${approver.approver.name} ${approver.approver.position}${
+                            approver.approvalStatus?.codeDescription ? ` (${approver.approvalStatus.codeDescription})` : ''
+                          }`}
                           avatar={
                             <Avatar alt={approver.name} src={approver.profileImg ? getImageUrl(approver.profileImg) : DefaultAvatar} />
                           }
@@ -274,27 +316,30 @@ export default function AddApproval({ readOnly = false, initialData = null }) {
             </Grid>
 
             <Grid size={12}>
-              <SubCard
-                title="참조자"
-                darkTitle={true}
-                contentSX={{
-                  display: 'flex',
-                  justifyContent: 'left',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: 0.5,
-                  '&:last-child': { pb: 2.5 }
-                }}
-              >
-                {references.map((ref, index) => (
-                  <Chip
-                    key={index}
-                    label={`${ref.name} ${ref.position}`}
-                    avatar={<Avatar alt={ref.name} src={ref.profileImg ? getImageUrl(ref.profileImg) : DefaultAvatar} />}
-                    onClick={handleClick}
-                    variant="outlined"
-                  />
-                ))}
+              <SubCard title="참조자" darkTitle={true}>
+                <Timeline sx={{ m: 0, p: 0, '& .MuiTimelineItem-root': { minHeight: 0 } }}>
+                  {references.map((ref, index) => (
+                    <TimelineItem key={index} sx={{ '&::before': { content: 'none' } }}>
+                      <TimelineSeparator>
+                        <TimelineDot color="primary" />
+                        {index < references.length - 1 && <TimelineConnector sx={{ bgcolor: 'primary.light' }} />}
+                      </TimelineSeparator>
+                      <TimelineContent
+                        sx={{
+                          pb: index < references.length - 1 ? 2 : 0,
+                          pt: '6px'
+                        }}
+                      >
+                        <Chip
+                          label={`${ref.name} ${ref.position}`}
+                          avatar={<Avatar alt={ref.name} src={ref.profileImg ? getImageUrl(ref.profileImg) : DefaultAvatar} />}
+                          onClick={handleClick}
+                          variant="outlined"
+                        />
+                      </TimelineContent>
+                    </TimelineItem>
+                  ))}
+                </Timeline>
               </SubCard>
             </Grid>
           </Grid>

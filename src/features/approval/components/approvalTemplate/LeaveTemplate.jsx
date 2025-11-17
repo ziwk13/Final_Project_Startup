@@ -1,5 +1,6 @@
 import 'features/approval/components/approvalTemplate/ApprovalStyles.css';
 import ApprovalFormHeader from './ApprovalFormHeader';
+import useAuth from 'hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { getVacationTypes } from '../../api/approvalAPI';
 
@@ -15,6 +16,7 @@ export default function LeaveTemplate({
   draftPosition,
   draftDate
 }) {
+  const { user } = useAuth();
   const [vacationTypes, setVacationTypes] = useState([]);
 
   useEffect(() => {
@@ -26,9 +28,9 @@ export default function LeaveTemplate({
     setTemplateValues((prev) => ({ ...prev, [key]: value }));
   };
 
+  // 날짜만 추출
   const formatDate = (v) => (v ? v.split('T')[0] : '');
 
-  // 사용일수 자동계산
   useEffect(() => {
     if (!templateValues.startDate || !templateValues.endDate) return;
 
@@ -38,17 +40,15 @@ export default function LeaveTemplate({
     if (isNaN(start.getTime()) || isNaN(end.getTime())) return;
     if (end < start) return;
 
+    // 차이 계산 (밀리초 기준)
     const diffMs = end - start;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1; // 양끝 포함
 
     setTemplateValues((prev) => ({
       ...prev,
       vacationDays: diffDays
     }));
-  }, [templateValues.startDate, templateValues.endDate]);
-
-  // 휴가 종류 라벨 찾기
-  const vacationTypeLabel = vacationTypes.find((v) => v.commonCodeId === templateValues.vacationTypeCode)?.value2 || '';
+  }, [templateValues.startDate, templateValues.endDate, setTemplateValues]);
 
   return (
     <div style={{ width: '95%', maxWidth: '1050px', margin: '0 auto' }}>
@@ -58,84 +58,66 @@ export default function LeaveTemplate({
         draftDept={draftDept}
         draftPosition={draftPosition}
         draftDate={draftDate}
+        docNo={docNo}
         approvalLines={approvalLines}
         approvalReferences={approvalReferences}
-        docNo={docNo}
       />
 
       <table className="form-table" style={{ width: '100%' }}>
         <tbody>
-          {/* 휴가 종류 */}
           <tr>
             <td className="form-th">휴가 종류</td>
             <td className="form-td">
-              {readOnly ? (
-                <span>{vacationTypeLabel}</span>
-              ) : (
-                <select
-                  className="input-select"
-                  style={{ width: '280px' }}
-                  value={templateValues.vacationTypeCode || ''}
-                  onChange={(e) => handleChange('vacationTypeCode', e.target.value)}
-                >
-                  <option value="">선택</option>
-                  {vacationTypes.map((type) => (
-                    <option key={type.commonCodeId} value={type.commonCodeId}>
-                      {type.value2}
-                    </option>
-                  ))}
-                </select>
-              )}
+              <select
+                className="input-select"
+                style={{ width: '280px' }}
+                value={templateValues.vacationTypeCode || ''}
+                onChange={(e) => handleChange('vacationTypeCode', e.target.value)}
+                disabled={readOnly}
+              >
+                <option value="">선택</option>
+                {vacationTypes.map((type) => (
+                  <option key={type.commonCodeId} value={type.commonCodeId}>
+                    {type.value2}
+                  </option>
+                ))}
+              </select>
             </td>
           </tr>
 
-          {/* 휴가 기간 */}
           <tr>
             <td className="form-th">휴가 기간</td>
             <td className="form-td">
-              {readOnly ? (
-                <span>
-                  {formatDate(templateValues.startDate)} ~ {formatDate(templateValues.endDate)}
-                  <span style={{ marginLeft: '12px' }}>사용일수 : {templateValues.vacationDays || ''}일</span>
-                </span>
-              ) : (
-                <>
-                  <input
-                    type="date"
-                    className="input-date"
-                    value={formatDate(templateValues.startDate)}
-                    onChange={(e) => handleChange('startDate', e.target.value + 'T00:00:00')}
-                  />
-                  ~
-                  <input
-                    type="date"
-                    className="input-date"
-                    value={formatDate(templateValues.endDate)}
-                    onChange={(e) => handleChange('endDate', e.target.value + 'T00:00:00')}
-                  />
-                  <span style={{ marginLeft: '12px' }}>
-                    사용일수 :
-                    <input type="text" className="input-days" value={templateValues.vacationDays || ''} readOnly />일
-                  </span>
-                </>
-              )}
+              <input
+                type="date"
+                className="input-date"
+                value={formatDate(templateValues.startDate)}
+                onChange={(e) => handleChange('startDate', e.target.value + 'T00:00:00')}
+                disabled={readOnly}
+              />
+              ~
+              <input
+                type="date"
+                className="input-date"
+                value={formatDate(templateValues.endDate)}
+                onChange={(e) => handleChange('endDate', e.target.value + 'T00:00:00')}
+                disabled={readOnly}
+              />
+              <span style={{ marginLeft: '12px' }}>사용일수 : </span>
+              <input type="text" className="input-days" value={templateValues.vacationDays || ''} readOnly />일
             </td>
           </tr>
 
-          {/* 휴가 사유 */}
           <tr>
             <td className="form-th">휴가 사유</td>
             <td className="form-td">
-              {readOnly ? (
-                <div style={{ minHeight: '180px', whiteSpace: 'pre-wrap' }}>{templateValues.vacationReason || ''}</div>
-              ) : (
-                <textarea
-                  className="textarea-reason"
-                  style={{ height: '180px' }}
-                  value={templateValues.vacationReason || ''}
-                  onChange={(e) => handleChange('vacationReason', e.target.value)}
-                />
-              )}
+              <textarea
+                className="textarea-reason"
+                style={{ height: '180px' }}
+                value={templateValues.vacationReason || ''}
+                onChange={(e) => handleChange('vacationReason', e.target.value)}
+                readOnly={readOnly}
+              />
             </td>
           </tr>
         </tbody>

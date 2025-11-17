@@ -22,6 +22,7 @@ export default function BusinessTripTemplate({
 
   return (
     <div style={{ width: '95%', maxWidth: '1050px', margin: '0 auto' }}>
+      {/* ✔ ApprovalFormHeader - TemplateRenderer에서 이미 값 정리됨 */}
       <ApprovalFormHeader
         title="출장신청서"
         draftUser={draftUser}

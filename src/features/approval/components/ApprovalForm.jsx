@@ -15,18 +15,17 @@ import ApprovalFormModal from 'features/approval/components/ApprovalFormModal';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, List, ListItemButton, ListItemText } from '@mui/material';
 import useAuth from 'hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 // api
 import { getApprovalTemplates } from 'features/approval/api/approvalAPI';
+
+import { decideApproval } from '../api/approvalAPI';
 
 // ==============================|| ADD NEW FORM ||============================== //
 
 export default function ApprovalForm({
   selectedForm,
   setSelectedForm,
-  startTime,
-  setStartTime,
-  endTime,
-  setEndTime,
   attachments,
   setAttachments,
   onOpenModal,
@@ -34,7 +33,10 @@ export default function ApprovalForm({
   alertInfo,
   setAlertInfo,
   TemplateRendererSlot,
-  readOnly = false
+  readOnly = false,
+  approvers,
+  initialData,
+  approvalLines
 }) {
   // 40px 높이를 위한 공통 스타일
   const customInputStyle = {
@@ -55,6 +57,7 @@ export default function ApprovalForm({
   const [templateList, setTemplateList] = useState([]);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchTemplates() {
@@ -67,6 +70,11 @@ export default function ApprovalForm({
     }
     fetchTemplates();
   }, []);
+
+  const myPendingLine = approvalLines?.find(
+    (line) => line.approvalStatus?.value1 === 'AWAITING' && line.approver?.employeeId === user?.employeeId
+  );
+  const isMyTurn = readOnly && !!myPendingLine;
 
   return (
     <Formik initialValues={{ title: '', content: '' }} onSubmit={onFormSubmit}>
@@ -105,6 +113,66 @@ export default function ApprovalForm({
                     </>
                   )}
 
+                  {/* 승인 */}
+                  {isMyTurn && (
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        variant="contained"
+                        color="info"
+                        sx={{ height: '35px' }}
+                        onClick={async () => {
+                          try {
+                            await decideApproval({
+                              lineId: myPendingLine.lineId,
+                              statusCodeId: 9
+                            });
+                            setAlertInfo({
+                              open: true,
+                              message: '승인되었습니다.',
+                              severity: 'success'
+                            });
+                            setTimeout(() => navigate('/approval/list/pending'), 800);
+                          } catch (err) {
+                            setAlertInfo({
+                              open: true,
+                              message: err.response?.data?.message || '승인 실패',
+                              severity: 'error'
+                            });
+                          }
+                        }}
+                      >
+                        승인
+                      </Button>
+                      {/*  반려 */}
+                      <Button
+                        variant="contained"
+                        color="error"
+                        sx={{ height: '35px' }}
+                        onClick={async () => {
+                          try {
+                            await decideApproval({
+                              lineId: myPendingLine.lineId,
+                              statusCodeId: 10
+                            });
+                            setAlertInfo({
+                              open: true,
+                              message: '반려되었습니다.',
+                              severity: 'warning'
+                            });
+                            setTimeout(() => navigate('/approval/list/pending'), 800);
+                          } catch (err) {
+                            setAlertInfo({
+                              open: true,
+                              message: err.response?.data?.message || '반려 실패',
+                              severity: 'error'
+                            });
+                          }
+                        }}
+                      >
+                        반려
+                      </Button>
+                    </Stack>
+                  )}
                   <Box sx={{ flexGrow: 1 }} />
 
                   {alertInfo.open && (
@@ -128,13 +196,15 @@ export default function ApprovalForm({
             >
               <Grid container spacing={3}>
                 {TemplateRendererSlot && (
-                  <Grid item xs={12}>
+                  <Grid>
                     <Box mt={2}>{TemplateRendererSlot}</Box>
                   </Grid>
                 )}
-                <Grid item xs={12}>
-                  <AttachmentDropzone attachments={attachments} setAttachments={setAttachments} height={100} readOnly={readOnly} />
-                </Grid>
+                {!readOnly && (
+                  <Grid item xs={12}>
+                    <AttachmentDropzone attachments={attachments} setAttachments={setAttachments} height={100} readOnly={readOnly} />
+                  </Grid>
+                )}
               </Grid>
             </MainCard>
           </form>
