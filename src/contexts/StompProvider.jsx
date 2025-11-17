@@ -25,7 +25,6 @@ export function StompProvider({ children }){
 
     // 연결 성공 시
     stompClient.onConnect = (frame) => {
-      console.log('STOMP 연결 성공', frame);
       setIsConnected(true);
     };
 
@@ -37,7 +36,6 @@ export function StompProvider({ children }){
 
     // 연결 해제 시
     stompClient.onDisconnect = () => {
-      console.log('STOMP (Context): 연결 해제');
       setIsConnected(false);
     };
 
