@@ -15,8 +15,9 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { Button } from '@mui/material';
-import { IconBell } from '@tabler/icons-react';
+import { IconBell, IconTrash } from '@tabler/icons-react';
 import { IconBellCheck } from '@tabler/icons-react';
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 
 // project imports
 import { deleteAllNotifications, getUnreadCount, markAllAsRead } from '../api/notification';
@@ -26,8 +27,6 @@ import NotificationList from '../components/NotificationList';
 import MainCard from 'ui-component/cards/MainCard';
 import Transitions from 'ui-component/extended/Transitions';
 import IconBellRingingFilled from 'assets/icons/IconBellRingingFilled';
-import TrashIcon from 'assets/icons/TrashIcon';
-import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 
 // notification status options
 const status = [
@@ -56,7 +55,6 @@ export default function NotificationSection() {
   const downMD = useMediaQuery(theme.breakpoints.down('md'));
 
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -100,11 +98,17 @@ if (client && isConnected) {
       const subscription = client.subscribe(notificationTopic, (message) => {
         try {
           const payload = JSON.parse(message.body);
-          console.log('STOMP (Context): 새 알림 개수 수신', payload);
           setUnreadCount(payload.unreadCount);
-          setRefreshKey(prevKey => prevKey + 1);
         } catch (e) {
           console.error('STOMP (Context): 알림 메시지 파싱 실패', e);
+        }
+      });
+
+      const newNotiSubscription = client.subscribe('/user/queue/new-notifications', (message) => {
+        try {
+          setRefreshKey(prevKey => prevKey + 1);
+        } catch (error) {
+          console.error('STOMP: 새 알림 객체 파싱 실패', error);
         }
       });
 
@@ -112,7 +116,9 @@ if (client && isConnected) {
       return () => {
         if (subscription) {
           subscription.unsubscribe();
-          console.log('STOMP (Context): 알림 구독 해제');
+        }
+        if(newNotiSubscription) {
+          newNotiSubscription.unsubscribe();
         }
       };
     }
@@ -264,7 +270,7 @@ if (client && isConnected) {
                           </Dialog>
                           <Tooltip title="전체 알림 삭제">
                             <IconButton onClick={handleDeleteAllClick} color="error" size="small">
-                              <TrashIcon />
+                              <IconTrash />
                             </IconButton>
                           </Tooltip>
                         </Stack>
