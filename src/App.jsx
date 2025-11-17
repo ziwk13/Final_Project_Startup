@@ -68,12 +68,14 @@ export default function App() {
               <AuthProvider>
                 <StompProvider>
                   <ChatProvider>
+                    <MenuProvider>
                     <>
                       <Notistack>
-                        <RouterProvider router={router} />
+                        <AppRouter />
                         <Snackbar />
                       </Notistack>
                     </>
+                    </MenuProvider>
                   </ChatProvider>
                 </StompProvider>
               </AuthProvider>
