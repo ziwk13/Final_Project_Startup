@@ -9,7 +9,6 @@ import Grid from '@mui/material/Grid';
 
 // assets
 import AttachmentTwoToneIcon from '@mui/icons-material/AttachmentTwoTone';
-import MoodTwoToneIcon from '@mui/icons-material/MoodTwoTone';
 import SendTwoToneIcon from '@mui/icons-material/SendTwoTone';
 
 // ==============================|| CHAT - MESSAGE INPUT ||============================== //
