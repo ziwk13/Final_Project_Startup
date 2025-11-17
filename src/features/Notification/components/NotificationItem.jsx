@@ -1,10 +1,11 @@
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { useChat } from 'contexts/ChatContext';
+import { useState } from 'react';
 
 // material-ui
 import CloseIcon from '@mui/icons-material/Close';
-import { Avatar, Chip, IconButton, ListItem, ListItemAvatar, Stack, Typography, Box } from '@mui/material';
+import { Avatar, Chip, IconButton, ListItem, ListItemAvatar, Stack, Typography, Box, Modal, Button } from '@mui/material';
 
 import { IconBadge, IconBug, IconFileCheck, IconMail, IconCalendar } from '@tabler/icons-react';
 import EmployeeIcon from 'assets/icons/EmployeeIcon';
@@ -19,7 +20,8 @@ const NotificationItem = ({ notification, onItemRead, onItemDelete, onClose }) =
   const { notificationId: id, title, content, createdAt, readAt, ownerType, url } = notification;
   const navigate = useNavigate();
   const containerSX = { gap: 2, pl: 7 };
-  const { openChatWithUrl } = useChat();
+  const { openChatWithUrl, myChatRoomIds } = useChat();
+  const [error, setError] = useState(null);
 
   // 새 알림 Chip을 표시할 시간
   const NEW_THRESHOLD_MINUTES = 5;
@@ -74,12 +76,18 @@ const NotificationItem = ({ notification, onItemRead, onItemDelete, onClose }) =
         });
     }
     if (ownerType === 'TEAMCHATNOTI') {
-      if(url) {
-        openChatWithUrl(url);
+      if (url) {
+        const roomId = url.split('/').pop();
+        if (myChatRoomIds && myChatRoomIds.includes(roomId)) {
+          openChatWithUrl(url);
+        } else {
+          setError('이미 나가거나 참여하지 않은 채팅방 입니다.');
+          return;
+        }
       } else {
         openChatWithUrl(null);
       }
-    } else if(url) {
+    } else if (url) {
       navigate(url);
     }
     if (onClose) {
@@ -100,7 +108,20 @@ const NotificationItem = ({ notification, onItemRead, onItemDelete, onClose }) =
         // API 파일에서 콘솔 에러 출력
       });
   };
+
+  const modalStyle = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 400,
+    bgcolor: 'background.paper',
+    border: '2px solid #000',
+    boxShadow: 24,
+    p: 4,
+  };
   return (
+    <>
     <ListItemWrapper onClick={handleReadClick}>
       <IconButton
         onClick={handleDeleteClick}
@@ -142,6 +163,27 @@ const NotificationItem = ({ notification, onItemRead, onItemDelete, onClose }) =
         </Stack>
       </Stack>
     </ListItemWrapper>
+    <Modal
+        open={Boolean(error)} // error 상태가 null이 아니면(true) 모달이 열립니다.
+        onClose={() => setError(null)} // 모달 바깥을 클릭하면 닫힙니다.
+        aria-labelledby="local-error-modal-title"
+      >
+        <Box sx={modalStyle}>
+          <Typography id="local-error-modal-title" variant="h6" component="h2">
+            알림
+          </Typography>
+          <Typography sx={{ mt: 2 }}>
+            {error} {/* setError로 설정한 에러 메시지가 여기에 표시됩니다. */}
+          </Typography>
+          <Button 
+            onClick={() => setError(null)} // '확인' 버튼을 누르면 닫힙니다.
+            sx={{ mt: 2 }}
+          >
+            확인
+          </Button>
+        </Box>
+      </Modal>
+    </>
   );
 };
 
