@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 // material-ui
 import Box from '@mui/material/Box';
@@ -20,7 +20,7 @@ import ChatHeader from './ChatHeader';
 import ChatRoom from './ChatRoom';
 import UserAvatar from './UserAvatar';
 import UserList from './UserList';
-import { leaveRoom, getRooms, inviteToRoom, getRoomById } from '../api/Chat';
+import { leaveRoom, getRooms, inviteToRoom, getRoomById, markRoomAsRead } from '../api/Chat';
 import { useStomp } from 'contexts/StompProvider';
 import OrganizationModal from '../../organization/components/OrganizationModal';
 
@@ -38,8 +38,21 @@ const mapDtoToUser = (room) => ({
   avatar: room.profile,
   lastMessage: room.lastMessage,
   unReadChatCount: room.unreadCount,
-  online_status: 'available'
+  online_status: 'available',
+  lastMessageTimestamp: room.lastMessageCreatedAt
 });
+
+// 채팅방 목록을 최신 메시지 시간순으로 정렬하는 헬퍼 함수
+const sortRoomsByTimestamp = (rooms) => {
+  return [...rooms].sort((a, b) => {
+    // lastMessageTimestamp가 없는 방은 맨 뒤로 보내짐
+    const timeA = a.lastMessageTimestamp ? new Date(a.lastMessageTimestamp).getTime() : 0;
+    const timeB = b.lastMessageTimestamp ? new Date(b.lastMessageTimestamp).getTime() : 0;
+
+    // 내림차순
+    return timeB - timeA;
+  });
+};
 
 export default function ChatDrawer({
   onStartNewChat,
@@ -72,6 +85,10 @@ export default function ChatDrawer({
   const initialInviteList = [{ name: '초대 대상자', empList: [] }];
   const [inviteList, setInviteList] = useState(initialInviteList);
 
+  // 에러 메시지 출력 모달
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
   const effectiveRoomId = currentRoom ? currentRoom.id : null;
 
   // 채팅방 나가기 메뉴 클릭
@@ -89,11 +106,13 @@ export default function ChatDrawer({
     if (!effectiveRoomId) return;
 
     try {
-      await leaveRoom(selectedUser.id);
+      await leaveRoom(effectiveRoomId);
       handleLeaveModalClose();
       onCloseChat();
     } catch (error) {
       console.error('채팅방 나가기 실패: ', error);
+      setErrorMessage("채팅방을 나가는 중 오류가 발생했습니다");
+      setIsErrorModalOpen(true);
       handleLeaveModalClose();
     }
   };
@@ -117,7 +136,6 @@ export default function ChatDrawer({
     // OrganizationModal에서 '초대 대상자' 박스의 empList를 찾음
     const inviteeBox = appliedList.find(item => item.name === '초대 대상자');
     if (!inviteeBox || inviteeBox.empList.length === 0) {
-      console.log("선택된 직원이 없습니다.");
       handleInviteModalClose(); // 모달 닫기
       return;
     }
@@ -132,25 +150,78 @@ export default function ChatDrawer({
 
       handleInviteModalClose(); // 성공 시 모달 닫기
     } catch (error) {
-      console.error('초대 실패:', error);
+      setErrorMessage("초대에 실패 했습니다. 다시 시도해주세요.");
+      setIsErrorModalOpen(true);
       handleInviteModalClose(); // 실패 시에도 모달 닫기
     }
   };
 
-
   const [chatRooms, setChatRooms] = useState([]);
   const { client, isConnected } = useStomp();
 
+  const fetchChatRooms = useCallback(async () => {
+    try {
+      const roomsDto = await getRooms();
+      const mappedData = roomsDto.map(mapDtoToUser);
+      const sortedDate = sortRoomsByTimestamp(mappedData);
+      setChatRooms(sortedDate);
+    } catch (error) {
+      console.error("채팅방 목록 초기 로드 실패", error);
+    }
+  }, []);
+
   // 알림 클릭 시 방 정보 로드
   useEffect(() => {
+    const markRoomAsReadInState = (idToMark) => {
+      if (!idToMark) return;
+
+      const roomToUpdate = chatRooms.find(
+        (room) => room.id === idToMark && room.unReadChatCount > 0
+      );
+      if (roomToUpdate) {
+        setChatRooms((currentRooms) =>
+          currentRooms.map((room) =>
+            room.id === idToMark ? { ...room, unReadChatCount: 0 } : room
+          )
+        );
+      }
+    };
     // 목록에서 클릭
     if (selectedUser) {
-      setCurrentRoom(selectedUser);
-      setIsLoadingRoom(false);
+      const roomFromList = chatRooms.find(room => room.id === selectedUser.id);
+      if (roomFromList) {
+        // 목록에 이미 있는 방
+        setCurrentRoom(roomFromList);
+        setIsLoadingRoom(false);
+        markRoomAsReadInState(selectedUser.id);
+        if(roomFromList.unReadChatCount > 0) {
+          markRoomAsRead(selectedUser.id);
+        }
+      } else {
+        // 목록에 없는 방(새로 생성된 채팅ㅂ아)
+        setIsLoadingRoom(true);
+        markRoomAsReadInState(selectedUser.id);
+        markRoomAsRead(selectedUser.id);
+        getRoomById(selectedUser.id)
+          .then(roomDto => {
+            const mappedRoom = mapDtoToUser(roomDto);
+            setCurrentRoom(mappedRoom);
+          })
+          .catch(error => {
+            console.error("새 채팅방 정보 로드 실패", error);
+            onCloseChat();  // 실패 시 목록으로 복귀
+          })
+          .finally(() => {
+            setIsLoadingRoom(false);
+          })
+      }
+
     }
     // 알림 클릭 흐름
     else if (roomId) {
       setIsLoadingRoom(true);
+      markRoomAsReadInState(roomId);
+      markRoomAsRead(roomId);
 
       getRoomById(roomId) // 백엔드 API 호출
         .then(roomDto => {
@@ -170,40 +241,21 @@ export default function ChatDrawer({
       setCurrentRoom(null);
       setIsLoadingRoom(false);
     }
-  }, [selectedUser, roomId, onCloseChat]);
+  }, [selectedUser, roomId, onCloseChat, chatRooms]);
 
   // 채팅방 목록 로드
   useEffect(() => {
     if (!selectedUser) {
-      const fetchChatRooms = async () => {
-        try {
-          const roomsDto = await getRooms();
-          const mappedData = roomsDto.map(mapDtoToUser);
-          setChatRooms(mappedData);
-        } catch (error) {
-          console.error("채팅방 목록 초기 로드 실패", error);
-        }
-      };
       fetchChatRooms();
     }
-  }, [selectedUser]);
+  }, [selectedUser, fetchChatRooms]);
 
   useEffect(() => {
     if (client && isConnected) {
       const listUpdateQueue = '/user/queue/chat-list-update';
 
       const subscription = client.subscribe(listUpdateQueue, (message) => {
-        try {
-          const updatedRoomDto = JSON.parse(message.body);
-          const mappedRoom = mapDtoToUser(updatedRoomDto);
-
-          setChatRooms(currentRooms => {
-            const otherRooms = currentRooms.filter(room => room.id !== mappedRoom.id);
-            return [mappedRoom, ...otherRooms];
-          });
-        } catch (error) {
-          console.error('채팅방 목록 업데이트 파싱 실패', error);
-        }
+        fetchChatRooms();
       });
       return () => {
         if (subscription) {
@@ -211,7 +263,7 @@ export default function ChatDrawer({
         }
       };
     }
-  }, [client, isConnected]);
+  }, [client, isConnected, fetchChatRooms]);
 
   return (
     <Box
@@ -237,8 +289,9 @@ export default function ChatDrawer({
                   <Grid>
                     <UserAvatar user={{
                       online_status: 'available',
-                      avatar: user?.avatar || 'avatar-5.png',
-                      name: user?.name || 'User'
+                      avatar: user?.avatar || null,
+                      name: user?.name || 'User',
+                      position: user?.position
                     }} />
                   </Grid>
                   <Grid size="grow">
@@ -336,6 +389,26 @@ export default function ChatDrawer({
             list={inviteList}
             setList={handleInviteApply} // '적용' 버튼 클릭 시 API 호출 함수(handleInviteApply) 실행
           />
+          <Dialog
+            open={isErrorModalOpen}
+            onClose={() => setIsErrorModalOpen(false)}
+            aria-labelledby="error-alert-dialog-title"
+            aria-describedby="error-alert-dialog-description"
+          >
+            <DialogTitle id="error-alert-dialog-title">
+              {"알림"}
+            </DialogTitle>
+            <DialogContent>
+              <DialogContentText id="error-alert-dialog-description">
+                {errorMessage}
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setIsErrorModalOpen(false)} autoFocus>
+                확인
+              </Button>
+            </DialogActions>
+          </Dialog>
         </>
       )}
     </Box>
