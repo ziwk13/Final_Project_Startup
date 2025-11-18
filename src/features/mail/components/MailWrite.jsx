@@ -7,7 +7,7 @@ import OrganizationModal from 'features/organization/components/OrganizationModa
 
 // material-ui
 import { useColorScheme } from '@mui/material/styles';
-import{Button, Collapse, Grid, Link, Slide, TextField, Box, CircularProgress}  from '@mui/material';
+import{Button, Collapse, Grid, Link, TextField, Box, CircularProgress}  from '@mui/material';
 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
@@ -170,59 +170,59 @@ export default function MailWrite() {
 				<Grid size={12}>
 					<MainCard>
 						<Grid container spacing={gridSpacing}>
-						<Grid size={12}>
-							<Box sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-							<Button variant="contained" onClick={handleSendMail} sx={{padding:'0 16px', height:'35px', lineHeight:'35px'}}>발송</Button>
-							<Button
-								variant="outlined"
-								color="primary"
-								type="button"
-								sx={{ height: '35px', lineHeight:'35px', padding:'0 16px', margin:'0 auto 0 10px' }}
-								endIcon={<PersonAddAlt1OutlinedIcon />}
-								onClick={openOrganModal}
-							>
-								받는 사람
-							</Button>
+							<Grid size={12}>
+								<Box sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+									<Button variant="contained" onClick={handleSendMail} sx={{padding:'0 16px', height:'35px', lineHeight:'35px'}}>발송</Button>
+									<Button
+										variant="outlined"
+										color="primary"
+										type="button"
+										sx={{ height: '35px', lineHeight:'35px', padding:'0 16px', margin:'0 auto 0 10px' }}
+										endIcon={<PersonAddAlt1OutlinedIcon />}
+										onClick={openOrganModal}
+									>
+										받는 사람
+									</Button>
 
-							<Link
-								component={RouterLink}
-								to="#"
-								color={colorScheme === ThemeMode.DARK ? 'primary' : 'secondary'}
-								onClick={handleCcBccChange}
-								underline="hover"
-							>
-								CC & BCC
-							</Link>
-							</Box>
-						</Grid>
-						<Grid size={12}>
-							<TextField fullWidth label="제목" value={title} onChange = {e => setTitle(e.target.value)}/>
-						</Grid>
-						<Grid size={12}>
-							<TextField fullWidth label="수신자" value={to} onChange = {e => setTo(e.target.value)}/>
-						</Grid>
-						<Grid sx={{ display: ccBccValue ? 'block' : 'none' }} size={12}>
-							<Collapse in={ccBccValue}>
-							{ccBccValue && (
-								<Grid container spacing={gridSpacing}>
-									<Grid size={12}>
-										<TextField fullWidth label="참조" value={cc} onChange = {e => setCc(e.target.value)}/>
+									<Link
+										component={RouterLink}
+										to="#"
+										color={colorScheme === ThemeMode.DARK ? 'primary' : 'secondary'}
+										onClick={handleCcBccChange}
+										underline="hover"
+									>
+										CC & BCC
+									</Link>
+								</Box>
+							</Grid>
+							<Grid size={12}>
+								<TextField fullWidth label="제목" value={title} onChange = {e => setTitle(e.target.value)}/>
+							</Grid>
+							<Grid size={12}>
+								<TextField fullWidth label="수신자" value={to} InputProps={{readOnly:true}} onClick={openOrganModal}/>
+							</Grid>
+							<Grid sx={{ display: ccBccValue ? 'block' : 'none' }} size={12}>
+								<Collapse in={ccBccValue}>
+								{ccBccValue && (
+									<Grid container spacing={gridSpacing}>
+										<Grid size={12}>
+											<TextField fullWidth label="참조" value={cc} InputProps={{readOnly:true}} onClick={openOrganModal}/>
+										</Grid>
+										<Grid size={12}>
+											<TextField fullWidth label="숨은 참조" value={bcc} InputProps={{readOnly:true}} onClick={openOrganModal}/>
+										</Grid>
 									</Grid>
-									<Grid size={12}>
-										<TextField fullWidth label="숨은 참조" value={bcc} onChange = {e => setBcc(e.target.value)}/>
-									</Grid>
-								</Grid>
-							)}
-							</Collapse>
-						</Grid>
+								)}
+								</Collapse>
+							</Grid>
 
-						{/* quill editor */}
-						<Grid size={12}>
-							<ReactQuill value={content} onChange = {setContent} ref={quillRef} modules={modules}/>
-						</Grid>
-						<Grid size={12}>
-							<AttachmentDropzone attachments={attachments} setAttachments={setAttachments} height={"150px"}/>
-						</Grid>
+							{/* quill editor */}
+							<Grid size={12}>
+								<ReactQuill value={content} onChange = {setContent} ref={quillRef} modules={modules}/>
+							</Grid>
+							<Grid size={12}>
+								<AttachmentDropzone attachments={attachments} setAttachments={setAttachments} height={"150px"}/>
+							</Grid>
 						</Grid>
 					</MainCard>
 				</Grid>

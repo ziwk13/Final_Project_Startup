@@ -12,7 +12,6 @@ import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
 
 // assets
-import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import CommonDataGrid from '../../list/components/CommonDataGrid';
 import MailMoveDialog from './MailMoveDialog';
 import GridPaginationActions from '../../list/components/GridPaginationActions';
@@ -100,7 +99,8 @@ export default function MailList({mailboxType}) {
 	// 메일 삭제
 	const handleDelete = async (mailboxType) => {
 		if (selectedMailIds.length === 0) {
-			alert("삭제할 메일을 선택하세요.");
+			setAlertMessage("삭제할 메일을 선택해주세요.");
+			setShowAlert(true);
 			return;
 		}
 
@@ -110,7 +110,8 @@ export default function MailList({mailboxType}) {
 			setReload(prev => !prev);
 		} catch (err) {
 			console.error(err);
-			alert("삭제 실패");
+			setAlertMessage("삭제 실패");
+			setShowAlert(true);
 		}
 	}
 
@@ -296,7 +297,7 @@ export default function MailList({mailboxType}) {
 
   return (
     <MainCard
-				sx={{
+			sx={{
 				'& .checkbox-col-cell': {
 					display:'flex !important',
 					paddingLeft: '0 !important',
@@ -347,7 +348,7 @@ export default function MailList({mailboxType}) {
 					</Grid>
         </Grid>
       }
-      content={false}
+			content={false}
     >
 			{loading ? (
 				<Box
