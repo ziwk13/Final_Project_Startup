@@ -58,8 +58,6 @@ export default function AddEventForm({ event, range, handleDelete, handleCreate,
   // 조직도 모달 상태
   const [orgOpen, setOrgOpen] = useState(false);
   const [orgList, setOrgList] = useState([{ name: '참석자', empList: [] }]);
-
-  // MUI 알림 관련 상태
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [confirmDialog, setConfirmDialog] = useState({ open: false, onConfirm: null });
 
