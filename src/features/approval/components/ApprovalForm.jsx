@@ -117,8 +117,8 @@ export default function ApprovalForm({
                   {isMyTurn && (
                     <Stack direction="row" spacing={1}>
                       <Button
-                        variant="contained"
-                        color="info"
+                        variant="outlined"
+                        color="secondary"
                         sx={{ height: '35px' }}
                         onClick={async () => {
                           try {
@@ -145,7 +145,7 @@ export default function ApprovalForm({
                       </Button>
                       {/*  반려 */}
                       <Button
-                        variant="contained"
+                        variant="outlined"
                         color="error"
                         sx={{ height: '35px' }}
                         onClick={async () => {
