@@ -116,7 +116,6 @@ export default function SearchSection() {
   const searchInputRef = useRef(null); // 데스크탑 검색창 (Popper 기준점 및 너비 측정용)
   const navigate = useNavigate();
   const { searchableItems, loading } = useMenu();
-console.log(searchableItems);
   // ====== 추가: 제목에서 검색어와 일치하는 부분만 하이라이트해서 렌더하는 함수 ======
   const getHighlightedText = (text, query) => {
     if (!query) return text;
