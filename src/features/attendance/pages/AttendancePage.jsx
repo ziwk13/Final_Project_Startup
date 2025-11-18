@@ -11,7 +11,6 @@ export default function Dashboard() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      {/* 근태 카드 + 일정 카드 */}
       <Box
         sx={{
           display: 'flex',
@@ -20,12 +19,12 @@ export default function Dashboard() {
           alignItems: 'stretch'
         }}
       >
-        {/* 왼쪽 근태 카드 */}
+        {/* 근태 카드 */}
         <Box sx={{ flex: 7 }}>
           <AttendanceBasicCard isLoading={isLoading} />
         </Box>
 
-        {/* 오른쪽 일정 카드 */}
+        {/* 일정 카드 */}
         <Box sx={{ flex: 3, minHeight: 0 }}>
           <AttendanceScheduleCard />
         </Box>

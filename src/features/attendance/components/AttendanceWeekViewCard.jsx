@@ -24,7 +24,7 @@ export default function AttendanceWeekViewCard({ employeeId: propEmployeeId }) {
     const diff = day === 0 ? 6 : day - 1;
     return today.subtract(diff, 'day').format('YYYY-MM-DD');
   };
-  // 기준 주차 (월요일 시작)
+  // 월요일 기준
   const [weekStart, setWeekStart] = useState(getThisMonday());
 
   const handlePrevWeek = () => {
@@ -94,9 +94,7 @@ export default function AttendanceWeekViewCard({ employeeId: propEmployeeId }) {
         p: 3
       }}
     >
-      {/* ===== 상단 네비게이션 ===== */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2, mt: 1 }}>
-        {/* 왼쪽: 주차 이동 버튼 */}
         <Stack direction="row" alignItems="center" spacing={1}>
           <IconButton onClick={handlePrevWeek} color="inherit">
             <ArrowBackIosNewIcon fontSize="small" />
@@ -111,7 +109,6 @@ export default function AttendanceWeekViewCard({ employeeId: propEmployeeId }) {
           </IconButton>
         </Stack>
 
-        {/* 오른쪽: 오늘 버튼 */}
         <Button
           onClick={handleCurrentWeek}
           color="primary"

@@ -52,7 +52,7 @@ export default function AttendanceSummaryCard() {
           </Box>
         </Grid>
 
-        {/* 총 근무시간 (시간 + 분) */}
+        {/* 총 근무시간  */}
         <Grid item xs={12} sm={6} md={3}>
           <Box textAlign="center">
             <Typography variant="body1" color="text.secondary">

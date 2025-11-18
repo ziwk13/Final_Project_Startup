@@ -11,7 +11,6 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 
 import { useDispatch, useSelector } from 'react-redux';
 
-// 절대경로로 수정된 부분
 import {
   fetchTodayAttendance,
   clockIn,
@@ -192,7 +191,7 @@ export default function AttendanceBasicCard({ isLoading }) {
           </Alert>
         )}
 
-        {/* ===== Main 카드 (원래 크기 유지됨) ===== */}
+        {/* ===== Main 카드  ===== */}
         <MainCard>
           <Stack spacing={1}>
             {/* ===== 시간 라인 ===== */}
