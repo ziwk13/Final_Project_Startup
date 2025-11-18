@@ -1,8 +1,9 @@
 // material-ui
 import Grid from '@mui/material/Grid';
 import { Timeline, TimelineItem, TimelineSeparator, TimelineConnector, TimelineContent, TimelineDot } from '@mui/lab';
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { useEffect } from 'react';
+
 // project imports
 import TemplateRenderer from 'features/approval/components/approvalTemplate/TemplateRenderer';
 import { gridSpacing } from 'store/constant';
@@ -26,6 +27,22 @@ import { createApproval } from '../api/approvalAPI';
 
 // assets
 function handleClick() {}
+
+function toFormData(obj, form = new FormData(), prefix = '') {
+  for (const key in obj) {
+    const value = obj[key];
+    const formKey = prefix ? `${prefix}[${key}]` : key;
+
+    if (value instanceof File) {
+      form.append(formKey, value);
+    } else if (value !== null && typeof value === 'object') {
+      toFormData(value, form, formKey);
+    } else if (value !== undefined) {
+      form.append(formKey, value);
+    }
+  }
+  return form;
+}
 
 export default function AddApproval({ readOnly = false, initialData = null }) {
   const navigate = useNavigate();
@@ -60,45 +77,36 @@ export default function AddApproval({ readOnly = false, initialData = null }) {
   // 모달 제어용 state
   const [open, setOpen] = useState(false);
 
+  const getStatusChip = (statusValue) => {
+    switch (statusValue) {
+      case 'DOC_APPROVED':
+        return <Chip label="최종 승인" size="small" color="success" />;
+      case 'DOC_REJECTED':
+        return <Chip label="최종 반려" size="small" color="error" />;
+      case 'LINE_APPROVED':
+        return <Chip label="승인" size="small" color="success" />;
+      case 'AWAITING': // 결재 대기 (내 차례)
+        return <Chip label="대기" size="small" color="warning" />;
+      case 'PENDING': // 미결 (내 차례 아님)
+        return <Chip label="미결" size="small" color="primary" />;
+
+      default:
+        return null;
+    }
+  };
+
   //  상세조회(initialData)일 때 상태 초기화
   useEffect(() => {
     if (!initialData) return;
 
-    // 템플릿 정보
-    let templateData = initialData.approvalTemplate;
-    if (!templateData && initialData.templateCode) {
-      templateData = { code: initialData.templateCode, value1: `템플릿 (${initialData.templateCode})` };
-    }
-    if (templateData) {
-      setSelectedForm(templateData);
-    }
+    // 템플릿 정보 그대로 세팅
+    setSelectedForm(initialData.approvalTemplate);
 
-    // ===========================
-    //  AT1 : 휴가 템플릿 초기화
-    // ===========================
-    if (templateData?.code === 'AT1') {
-      setTemplateValues({
-        vacationTypeCode: initialData.vacationType?.commonCodeId || '',
-        vacationDays: initialData.vacationDays || '',
-        vacationReason: initialData.vacationReason || '',
-        startDate: initialData.startDate || '',
-        endDate: initialData.endDate || ''
-      });
-    }
-
-    // ===========================
-    //  AT2 : 출장 템플릿 초기화
-    // ===========================
-    else if (templateData?.code === 'AT2') {
-      setTemplateValues({
-        tripLocation: initialData.tripLocation || '',
-        transportation: initialData.transportation || '',
-        tripPurpose: initialData.tripPurpose || '',
-        tripRemark: initialData.tripRemark || '',
-        startDate: initialData.startDate || '',
-        endDate: initialData.endDate || ''
-      });
-    }
+    // 템플릿 관련 값 전체를 templateValues로 전달
+    setTemplateValues((prev) => ({
+      ...prev,
+      ...initialData
+    }));
 
     // 결재선 / 참조자 초기화
     const approverEmps = initialData.approvalLines ?? [];
@@ -116,7 +124,6 @@ export default function AddApproval({ readOnly = false, initialData = null }) {
       setSubmitting(false);
       return;
     }
-
     if (!approvers || approvers.length === 0) {
       setAlertInfo({
         open: true,
@@ -141,58 +148,17 @@ export default function AddApproval({ readOnly = false, initialData = null }) {
       content = `${templateLabel} 신청합니다.`;
     }
 
-    const formData = new FormData();
+    let formData = new FormData();
 
     formData.append('title', title);
     formData.append('content', content);
-
-    if (selectedForm) {
-      formData.append('templateCode', selectedForm.code);
-    } else {
-      setAlertInfo({
-        open: true,
-        message: '결재 양식을 선택해주세요.',
-        severity: 'warning'
-      });
-      setSubmitting(false);
-      return;
-    }
+    formData.append('templateCode', selectedForm.code);
     for (const pair of formData.entries()) {
       console.log(pair[0], pair[1]);
     }
 
+    toFormData(templateValues, formData);
     const templateData = templateValues || {};
-    // =======================
-    //  AT1 : 휴가 템플릿일 때
-    // =======================
-    if (selectedForm.code === 'AT1') {
-      if (templateData.vacationTypeCode) formData.append('vacationTypeCode', templateData.vacationTypeCode);
-
-      if (templateData.vacationDays) formData.append('vacationDays', templateData.vacationDays);
-
-      if (templateData.vacationReason) formData.append('vacationReason', templateData.vacationReason);
-
-      if (templateData.startDate) formData.append('startDate', templateData.startDate);
-
-      if (templateData.endDate) formData.append('endDate', templateData.endDate);
-    }
-
-    // =======================
-    //  AT2 : 출장 템플릿일 때
-    // =======================
-    if (selectedForm.code === 'AT2') {
-      if (templateData.tripLocation) formData.append('tripLocation', templateData.tripLocation);
-
-      if (templateData.transportation) formData.append('transportation', templateData.transportation);
-
-      if (templateData.tripPurpose) formData.append('tripPurpose', templateData.tripPurpose);
-
-      if (templateData.tripRemark) formData.append('tripRemark', templateData.tripRemark);
-
-      if (templateData.startDate) formData.append('startDate', templateData.startDate);
-
-      if (templateData.endDate) formData.append('endDate', templateData.endDate);
-    }
 
     // 결재선(ApprovalLines) 추가
     approvers.forEach((approver, index) => {
@@ -215,6 +181,7 @@ export default function AddApproval({ readOnly = false, initialData = null }) {
     // API 호출
     try {
       setSubmitting(true);
+      // templateValues to formdata
       const response = await createApproval(formData);
       setAlertInfo({
         open: true,
@@ -278,6 +245,7 @@ export default function AddApproval({ readOnly = false, initialData = null }) {
                   draftPosition={initialData?.creator?.position}
                   draftDate={initialData?.createdAt}
                   approvalDate={finalDecisionLine?.approvalDate}
+                  initialData={initialData}
                 />
               ) : null
             }
@@ -297,17 +265,49 @@ export default function AddApproval({ readOnly = false, initialData = null }) {
                         <TimelineDot color="primary" />
                         {index < approvers.length - 1 && <TimelineConnector sx={{ bgcolor: 'primary.light' }} />}
                       </TimelineSeparator>
-                      <TimelineContent sx={{ pb: index < approvers.length - 1 ? 2 : 0, pt: '6px' }}>
-                        <Chip
-                          label={`${approver.approver.name} ${approver.approver.position}${
-                            approver.approvalStatus?.codeDescription ? ` (${approver.approvalStatus.codeDescription})` : ''
-                          }`}
-                          avatar={
-                            <Avatar alt={approver.name} src={approver.profileImg ? getImageUrl(approver.profileImg) : DefaultAvatar} />
-                          }
-                          onClick={handleClick}
-                          variant="outlined"
-                        />
+
+                      <TimelineContent
+                        sx={{
+                          pb: index < approvers.length - 1 ? 2 : 0,
+                          pt: '6px'
+                        }}
+                      >
+                        {/* 아바타 */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Chip
+                            label={
+                              initialData
+                                ? `${approver.approver.name} ${approver.approver.position}`
+                                : `${approver.name} ${approver.position}`
+                            }
+                            avatar={
+                              <Avatar
+                                alt={initialData ? approver.approver.name : approver.name}
+                                src={
+                                  (initialData ? approver.approver.profileImg : approver.profileImg)
+                                    ? getImageUrl(initialData ? approver.approver.profileImg : approver.profileImg)
+                                    : DefaultAvatar
+                                }
+                                sx={{ width: 36, height: 36 }}
+                              />
+                            }
+                            onClick={handleClick}
+                            variant="outlined"
+                          />
+
+                          {/* 상태 칩  */}
+
+                          {readOnly &&
+                            getStatusChip(
+                              approver.approvalStatus?.value1 === 'APPROVED'
+                                ? 'LINE_APPROVED'
+                                : approver.approvalStatus?.value1 === 'REJECTED'
+                                  ? 'DOC_REJECTED'
+                                  : approver.approvalStatus?.value1 === 'AWAITING'
+                                    ? 'AWAITING'
+                                    : 'PENDING'
+                            )}
+                        </Box>
                       </TimelineContent>
                     </TimelineItem>
                   ))}
