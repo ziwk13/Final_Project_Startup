@@ -127,3 +127,17 @@ export const markRoomAsRead = async (roomId) => {
     throw error;
   }
 };
+
+/**
+ * HTTP API를 통해 파일이 첨부된 메시지를 전송 한다.
+ */
+export const sendMessageWithFiles = async (roomId, formData) => {
+  try {
+    const response = await axiosServices.post(`/api/chat/rooms/${roomId}/send-with-files`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data'}
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
