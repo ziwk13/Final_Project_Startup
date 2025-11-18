@@ -19,7 +19,7 @@ jobs:
       - name: Create .env file
         run: |
           # 루트 .env (docker-compose.yml에서 사용)
-          echo "VITE_API_SERVER_HOST=${{ secrets.ALLOWED_ORIGIN }}" >> .env
+          echo "VITE_APP_API_URL=${{ secrets.ALLOWED_ORIGIN }}" >> .env
 
       # 3. EC2로 파일 전송 (플러그인-https://github.com/appleboy/ssh-action)
       - name: Copy file to EC2
