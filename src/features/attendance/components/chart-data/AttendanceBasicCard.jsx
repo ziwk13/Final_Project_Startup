@@ -36,7 +36,18 @@ export default function AttendanceBasicCard({ isLoading }) {
   const { colorScheme } = useColorScheme();
   const { user, isLoggedIn } = useAuth();
 
+  const workStatusMap = {
+    NORMAL: '정상근무',
+    LATE: '지각',
+    EARLY_LEAVE: '조퇴',
+    ABSENT: '결근',
+    VACATION: '휴가',
+    OUT_ON_BUSINESS: '외근',
+    OFF: '퇴근'
+  };
+
   const { today, loading, thisWeek } = useSelector((state) => state.attendance);
+  const VACATION = Object.keys(workStatusMap).find((key) => key === 'VACATION');
 
   const employeeId = user?.employeeId;
 
@@ -82,7 +93,7 @@ export default function AttendanceBasicCard({ isLoading }) {
 
   // ===== 출근 =====
   const handleClockIn = async () => {
-    if (today?.workStatus === 'VACATION') {
+    if (today?.workStatus === VACATION) {
       return setStatusMessage('오늘은 승인된 휴가일입니다. 출근할 수 없습니다.');
     }
     if (today?.endTime) return setStatusMessage('이미 퇴근이 완료되었습니다.');
@@ -94,6 +105,9 @@ export default function AttendanceBasicCard({ isLoading }) {
 
   // ===== 퇴근 =====
   const handleClockOut = async () => {
+    if (today?.workStatus === VACATION) {
+      return setStatusMessage('오늘은 승인된 휴가일입니다. 퇴근할 수 없습니다.');
+    }
     if (today?.endTime) return setStatusMessage('이미 퇴근이 완료되었습니다.');
     if (!today?.startTime) return setStatusMessage('출근 기록이 있어야 퇴근이 가능합니다.');
     await dispatch(clockOut(employeeId));
@@ -106,6 +120,9 @@ export default function AttendanceBasicCard({ isLoading }) {
 
   // ===== 근무상태 변경 =====
   const handleWorkStatusClick = (event) => {
+    if (today?.workStatus === VACATION) {
+      return setStatusMessage('오늘은 승인된 휴가일입니다. 근무상태를 변경 할 수 없습니다.');
+    }
     if (today?.endTime) return setStatusMessage('이미 퇴근이 완료되었습니다.');
     if (!today?.startTime) return setStatusMessage('출근 기록이 있어야 근무상태 변경이 가능합니다.');
     setAnchorEl(event.currentTarget);
@@ -113,19 +130,21 @@ export default function AttendanceBasicCard({ isLoading }) {
 
   const handleClose = () => setAnchorEl(null);
 
+  const inOfficeStatusKeys = Object.keys(workStatusMap).filter((key) => key === 'NORMAL' || key === 'LATE');
+
   const handleWorkStatusChange = (statusCode) => {
+    if (statusCode === 'return-to-office') {
+      const isInOffice = inOfficeStatusKeys.includes(today?.workStatus);
+
+      if (isInOffice) {
+        setStatusMessage('이미 사내 근무 중입니다.');
+        handleClose();
+        return;
+      }
+    }
+
     dispatch(updateWorkStatus({ employeeId, statusCode }));
     handleClose();
-  };
-
-  const workStatusMap = {
-    NORMAL: '정상근무',
-    LATE: '지각',
-    EARLY_LEAVE: '조퇴',
-    ABSENT: '결근',
-    VACATION: '휴가',
-    OUT_ON_BUSINESS: '외근',
-    OFF: '퇴근'
   };
 
   const {
@@ -157,7 +176,7 @@ export default function AttendanceBasicCard({ isLoading }) {
       <Box sx={{ position: 'relative' }}>
         {statusMessage && (
           <Alert
-            severity={statusMessage.includes('가능') || statusMessage.includes('완료') ? 'error' : 'success'}
+            severity={statusMessage.includes('가능' && '없습니다.' && '이미') || statusMessage.includes('완료') ? 'error' : 'success'}
             sx={{
               position: 'absolute',
               top: 10,
