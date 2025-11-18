@@ -170,9 +170,6 @@ export default function ChatRoom({ roomId, user, theme }) {
     try {
       await sendMessageWithFiles(roomId, formData);
     } catch (error) {
-      console.log("Error Object:", error);
-      console.log("Error Response:", error.response); 
-      console.log("Error Status:", error.response?.status);
       setError(error.response?.data?.message || '파일 업로드에 실패 했습니다');
     } finally {
       setLoading(false);
