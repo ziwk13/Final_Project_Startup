@@ -38,7 +38,8 @@ const mapDtoToUser = (room) => ({
   avatar: room.profile,
   lastMessage: room.lastMessage,
   unReadChatCount: room.unreadCount,
-  lastMessageTimestamp: room.lastMessageCreatedAt
+  lastMessageTimestamp: room.lastMessageCreatedAt,
+  memberCount: room.memberCount,
 });
 
 // 채팅방 목록을 최신 메시지 시간순으로 정렬하는 헬퍼 함수
