@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import ReactQuill from 'features/editor/components/ReactQuill';
+import { useNavigate } from 'react-router-dom';
+
 // material-ui
-import {Box, Grid, CircularProgress } from '@mui/material';
+import {Box, Grid, CircularProgress, Button } from '@mui/material';
 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
@@ -15,6 +17,7 @@ import { useParams } from 'react-router-dom';
 
 
 export default function MailDetail() {
+	const navigate = useNavigate();
 	const {mailId} = useParams();
 	const [mail, setMail] = useState(null);	// 메일 상세 데이터
 	const [loading, setLoading] = useState(false);	// 로딩중
@@ -63,6 +66,9 @@ export default function MailDetail() {
 
 	return (
 	<Grid container spacing={gridSpacing}>
+		<Button variant="contained" onClick={() => navigate(`/mail/write/${mailId}?mode=reply`)}>회신</Button>
+		<Button variant="contained" onClick={() => navigate(-1)}>뒤로</Button>
+		
 		<Grid size={12}>
 			<MainCard>
 				{/* 메일 상세 부분 */}

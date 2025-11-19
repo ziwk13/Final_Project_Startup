@@ -22,7 +22,9 @@ export default function MailWrite() {
 	const navigate = useNavigate();
 	const quillRef = useRef(null);
 	const {mailId} = useParams();
-	const isRewrite = !!mailId;
+	const searchParams = new URLSearchParams(location.search);
+	const isReply = searchParams.get("mode") === "reply";
+	const isRewrite = !!mailId && !isReply;		// 재작성
 
 	// 요청할 메일 정보 데이터
 	const [title, setTitle] = useState('');
@@ -79,34 +81,93 @@ export default function MailWrite() {
     }
   };
 
+	const extractEmail = (raw) => {
+		if (!raw) return '';
+
+		// 앞부분에 있는 공백 제거
+		const text = raw.trim();
+
+		// 괄호 시작 전까지가 이메일
+		const idx = text.indexOf('(');
+		if (idx !== -1) {
+			return text.substring(0, idx).trim();
+		}
+
+		// 혹시 ( )가 없다면 그대로 반환
+		return text;
+	};
+
+	// 조직도에 전달할 데이터
+	const mapToOrgEmp = (email) => ({
+		email,
+		name: extractEmail(email).split('@')[0],  // 최소한 이름 생성
+		employeeId: email,                        // unique key 역할
+		position: '',
+		departmentName: '',
+		profileImg: ''
+	});
+
 	// 재작성일 때: 기존 메일 detail 불러오기
   useEffect(() => {
-    if (!isRewrite) return;
+    if (!mailId) return;
 
 		setLoading(true);
+
     detailMail(mailId)
       .then(res => {
         const data = res.data.data;
 
-        setTitle(data.title);
-        setContent(data.content);
-        setTo(data.to?.join(', ') || '');
-        setCc(data.cc?.join(', ') || '');
-        setBcc(data.bcc?.join(', ') || '');
+				
+				if(isReply) {
+					// *** 회신 ***
+					setTitle(`Re: ${data.title || ''}`);
+					setContent('');
 
-        // 기존 첨부파일 Dropzone에 맞게 가공
-        if (data.attachments) {
-          setAttachments(
-            data.attachments.map(file => ({
-              ...file,
-              isServerFile: true // 기존 파일임 표시
-            }))
-          );
-        }
+					// 회신이라 발신자가 수신자로 들어감
+					const senderEmail = extractEmail(data.senderEmail || '');
+					setTo(senderEmail);
+
+					// 참조, 숨은참조 초기화
+					setCc('');
+					setBcc('');
+
+					// 첨부파일 초기화 (참고 사이트에서도 첨부파일은 포함하지 않음)
+					setAttachments([]);
+
+					setList([
+						{name: '수신자', empList: senderEmail ? [mapToOrgEmp(senderEmail)] : []},
+						{name: '참조', empList: []},
+						{name: '숨은참조', empList: []}
+					]);
+				} else if(isRewrite) {
+					// *** 재작성 ***
+					setTitle(data.title);
+					setContent(data.content);
+					setTo((data.to || []).map(extractEmail).join(', '));
+					setCc((data.cc || []).map(extractEmail).join(', '));
+					setBcc((data.bcc || []).map(extractEmail).join(', '));
+	
+					// 기존 첨부파일 Dropzone에 맞게 가공
+					if (data.attachments) {
+						setAttachments(
+							data.attachments.map(file => ({
+								...file,
+								isServerFile: true // 기존 파일임 표시
+							}))
+						);
+					}
+
+					setList([
+						{ name: '수신자', empList: (data.to || []).map(mapToOrgEmp) },
+						{ name: '참조',   empList: (data.cc || []).map(mapToOrgEmp) },
+						{ name: '숨은참조', empList: (data.bcc || []).map(mapToOrgEmp) }
+					])
+				}
+
       })
       .catch(console.error)
 			.finally(() => setLoading(false));
-  }, [mailId]);
+  }, [mailId, isReply, isRewrite]);
 
 
 	// 조직도 연결하기
@@ -116,13 +177,16 @@ export default function MailWrite() {
 		{ name: '참조', empList: [] },
 		{ name: '숨은참조', empList: [] }
 	])
+
+	// 조직도 컴포넌트 열기
 	const openOrganModal = () => {
 		setOpen(true);
 	}
+
 	useEffect(() => {
-		const toList = list[0].empList.map(e => e.email);
-		const ccList = list[1].empList.map(e => e.email);
-		const bccList = list[2].empList.map(e => e.email);
+		const toList = list[0].empList.map(e => extractEmail(e.email));
+		const ccList = list[1].empList.map(e => extractEmail(e.email));
+		const bccList = list[2].empList.map(e => extractEmail(e.email));
 
 		setTo(toList.join(', '));
 		setCc(ccList.join(', '));
@@ -146,7 +210,7 @@ export default function MailWrite() {
 
 
 
-	if(isRewrite && loading) {
+	if(mailId && loading) {
 		return (
 			<Box
 				sx={{
