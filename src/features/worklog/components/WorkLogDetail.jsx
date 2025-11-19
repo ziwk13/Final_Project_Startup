@@ -14,6 +14,11 @@ export default function WorkLogDetail({worklogId}) {
 	const navigate = useNavigate();
 	const [worklog, setWorklog] = useState(null);	// 메일 상세 데이터
 
+	// 페이지 이동시 스크롤 맨 위로
+  useEffect(() => {
+		window.scrollTo(0, 0);
+	}, []);
+	
 	useEffect(() => {
     if (!worklogId) return;
     axiosServices

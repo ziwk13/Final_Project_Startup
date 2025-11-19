@@ -49,6 +49,11 @@ function WorkLogWrite({worklogId}) {
 		}
 	};
 
+	// 페이지 이동시 스크롤 맨 위로
+  useEffect(() => {
+		window.scrollTo(0, 0);
+	}, []);
+	
 	// 작성자 이름 가져오기
 	useEffect(() => {
 		getMyInfo()

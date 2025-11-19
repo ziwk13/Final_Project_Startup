@@ -42,7 +42,12 @@ export default function MailWrite() {
 	setCcBccValue((prev) => !prev);
   };
 
-  let composePosition = {};
+	// 페이지 이동시 스크롤 맨 위로
+  useEffect(() => {
+		window.scrollTo(0, 0);
+	}, []);
+
+	let composePosition = {};
 
   const [position, setPosition] = useState(true);
   if (!position) {
@@ -54,6 +59,19 @@ export default function MailWrite() {
 			}
 		};
   }
+
+	// 날짜 포맷 메소드
+	const formatDateTime = (dateString) => {
+		if(!dateString) return '';
+		const d = new Date(dateString);
+		return d.toLocaleString('ko-KR', {
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+	};
 
 	// 메일 작성
 	const handleSendMail = async () => {
@@ -121,7 +139,12 @@ export default function MailWrite() {
 				if(isReply) {
 					// *** 회신 ***
 					setTitle(`Re: ${data.title || ''}`);
-					setContent('');
+					const replyTemplate = `
+<br/>
+<hr/>
+<br/><b>보낸사람:</b> ${data.senderEmail || ''}<br/><b>보낸시간:</b> ${formatDateTime(data.sendAt)}<br/><b>제목:</b> ${data.title || ''}<br/><br/>${data.content || ''}
+`;
+					setContent(replyTemplate);
 
 					// 회신이라 발신자가 수신자로 들어감
 					const senderEmail = extractEmail(data.senderEmail || '');
@@ -133,7 +156,7 @@ export default function MailWrite() {
 
 					// 첨부파일 초기화 (참고 사이트에서도 첨부파일은 포함하지 않음)
 					setAttachments([]);
-
+					
 					setList([
 						{name: '수신자', empList: senderEmail ? [mapToOrgEmp(senderEmail)] : []},
 						{name: '참조', empList: []},

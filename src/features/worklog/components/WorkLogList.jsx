@@ -162,6 +162,11 @@ export default function WorkLogList({workLogListType}) {
 		}
 	}
 
+	// 업무일지 리스트 타입, 페이지, 리스트 수 변경시 스크롤 맨 위로
+		useEffect(() => {
+			loadList();
+			window.scrollTo(0, 0);
+		}, [workLogListType, page, size, reload]);
 
 	// 업무일지 리스트 타입 변경시 체크박스 초기화
 	useEffect(() => {
@@ -343,7 +348,7 @@ export default function WorkLogList({workLogListType}) {
 				</Box>
 			) : (
 				<>
-					<CommonDataGrid rows={rows} columns={columns} loading={loading} onRowClick={handleRowClick}/>
+					<CommonDataGrid rows={rows} columns={columns} loading={loading} onRowClick={handleRowClick} hideFooterSelectedRowCount/>
 					<GridPaginationActions
 						totalPages={totalPages}
 						page={page + 1}

@@ -42,6 +42,7 @@ export default function MailList({mailboxType}) {
 		number: 0,
 		size: 10
 	});
+	
 	const handlePageChange = (event, newPage) => {
 		setPage(newPage - 1); 
 	};
@@ -212,6 +213,12 @@ export default function MailList({mailboxType}) {
 		loadList();
 	}, [mailboxType, page, size, reload]);
 
+	// 메일함, 페이지, 리스트 수 변경시 스크롤 맨 위로
+	useEffect(() => {
+		loadList();
+		window.scrollTo(0, 0);
+	}, [mailboxType, page, size, reload]);
+
 	// 리스트 테이블 정의
 	useEffect(() => {
 		const cols = [];
@@ -366,7 +373,7 @@ export default function MailList({mailboxType}) {
 				</Box>
 			) : (
 				<>
-					<CommonDataGrid rows={rows} columns={columns} loading={loading} onRowClick={handleRowClick}/>
+					<CommonDataGrid rows={rows} columns={columns} loading={loading} onRowClick={handleRowClick} hideFooterSelectedRowCount/>
 					<GridPaginationActions
 						totalPages={totalPages}
 						page={page + 1}

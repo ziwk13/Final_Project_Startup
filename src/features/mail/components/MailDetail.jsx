@@ -11,16 +11,18 @@ import { gridSpacing } from 'store/constant';
 import axiosServices from 'api/axios';
 import AttachmentListView from 'features/attachment/components/AttachmentListView';
 
-
-import { detailMail } from '../api/mailAPI';
 import { useParams } from 'react-router-dom';
-
 
 export default function MailDetail() {
 	const navigate = useNavigate();
 	const {mailId} = useParams();
 	const [mail, setMail] = useState(null);	// 메일 상세 데이터
 	const [loading, setLoading] = useState(false);	// 로딩중
+	
+	// 페이지 이동시 스크롤 맨 위로
+	useEffect(() => {
+		window.scrollTo(0, 0);
+	}, []);
 
 	useEffect(() => {
     if (!mailId) return;
