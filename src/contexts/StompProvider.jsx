@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import PropTypes from 'prop-types';
+import { BASE_URL } from 'api/axios';
 // Context 생성
 const StompContext = createContext({
   client: null,
@@ -17,7 +18,7 @@ export function StompProvider({ children }){
   useEffect(() => {
     // STOMP 클라이언트 인스턴스 생성
     const stompClient = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS(`${ BASE_URL }ws`),
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
