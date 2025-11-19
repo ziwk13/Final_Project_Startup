@@ -175,7 +175,16 @@ export default function AttendanceBasicCard({ isLoading }) {
       <Box sx={{ position: 'relative' }}>
         {statusMessage && (
           <Alert
-            severity={statusMessage.includes('가능' && '없습니다.' && '이미') || statusMessage.includes('완료') ? 'error' : 'success'}
+            severity={
+              statusMessage.includes('없습니다') ||
+              statusMessage.includes('불가능') ||
+              statusMessage.includes('이미') ||
+              statusMessage.includes('오류') ||
+              statusMessage.includes('에러') ||
+              statusMessage.includes('실패')
+                ? 'error'
+                : 'success'
+            }
             sx={{
               position: 'absolute',
               top: 10,
