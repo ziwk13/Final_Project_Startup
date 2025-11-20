@@ -2,10 +2,13 @@ import React, {useState, useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { deleteMail, moveMail, getMailList, detailMail } from '../api/mailAPI';
 import {IconMail, IconMailOpened } from '@tabler/icons-react';
-import { Alert } from '@mui/material';
+import Chip from '@mui/material/Chip';
+import Avatar from '@mui/material/Avatar';
+import DefaultAvatar from 'assets/images/profile/default_profile.png';
+import { getImageUrl } from 'api/getImageUrl';
 
 // material-ui
-import {Box, Pagination, Checkbox, Grid, Button, CircularProgress} from '@mui/material';
+import {Box, Pagination, Checkbox, Grid, Button, CircularProgress, Alert} from '@mui/material';
 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
@@ -13,7 +16,6 @@ import { gridSpacing } from 'store/constant';
 
 // assets
 import CommonDataGrid from '../../list/components/CommonDataGrid';
-import MailMoveDialog from './MailMoveDialog';
 import GridPaginationActions from '../../list/components/GridPaginationActions';
 
 export default function MailList({mailboxType}) {
@@ -26,7 +28,6 @@ export default function MailList({mailboxType}) {
 	const [reload, setReload] = useState(false);
 	const [rows, setRows] = useState([]);
 	const [columns, setColumns] = useState([]);
-	const [moveOpen, setMoveOpen] = useState(false);		// 메일함 이동 팝업
 	const [loading, setLoading] = useState(false);
 
 	// Alert useState
@@ -83,7 +84,8 @@ export default function MailList({mailboxType}) {
 	// 메일함 이동
 	const handleMove = async (mailboxType) => {
 		if (selectedMailIds.length === 0) {
-			alert("이동할 메일을 선택하세요.");
+			setAlertMessage("이동할 메일을 1개이상 선택해주세요.")
+			setShowAlert(true);
 			return;
 		}
 
@@ -139,7 +141,21 @@ export default function MailList({mailboxType}) {
 					return {
 						...mail,
 						id: mail.boxId,
-						senderReceiver: mailboxType === 'SENT' ? mail.receivers?.join(', ') || '수신자 없음' : mail.senderName,
+						senderReceiver: mailboxType === 'SENT' 
+							? mail.receivers?.map(r => ({
+								name: r.name,
+								email: r.email,
+								profileImg: r.profileImg,
+								position: r.position,
+								department: r.department
+							})) || []
+							: [{
+								name: mail.senderName,
+								email: mail.senderEmail,
+								profileImg: mail.senderProfileImg,
+								position: mail.senderPosition,
+								department: mail.senderDepartment
+							}],
 						receivedAtText,
 					};
 				});
@@ -287,7 +303,44 @@ export default function MailList({mailboxType}) {
 				headerName: mailboxType === 'SENT' ? '받는 사람' : '보낸 사람',
 				flex: 1,
 				minWidth: 150,
+				headerAlign: 'center',
+				align: 'center',
 				sortable: false,
+				renderCell: (params) => {
+					const list = params.value || [];
+
+					if (list.length === 0) return null;
+
+					const first = list[0];
+					const extra = list.length - 1;
+
+					return (
+						<Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+							<Chip
+								label={`${first.email} (${first.name})`}
+								avatar={
+									<Avatar
+										alt={first.name}
+										src={first.profileImg ? getImageUrl(first.profileImg) : DefaultAvatar}
+										sx={{ width: 32, height: 32 }}
+									/>
+								}
+								variant="outlined"
+							/>
+
+							{extra > 0 && (
+								<Chip
+									label={`+${extra}`}
+									variant="outlined"
+									sx={{
+										backgroundColor: '#f1f1f1',
+										border: '1px solid #d0d0d0',
+									}}
+								/>
+							)}
+						</Box>
+					);
+				}
 			},
 			{
 				field: 'title',
@@ -340,7 +393,8 @@ export default function MailList({mailboxType}) {
           <Box sx={{display:"flex", gap:"5px"}}>
 						<Button variant="contained" onClick={() => navigate(`/mail/write`)}>작성</Button>
 						{mailboxType === "SENT" && <Button variant="contained" onClick={handleRewrite}>재작성</Button>}
-						<Button variant="contained" onClick={() => openMoveDialog()}>이동</Button>
+						{mailboxType !== "MYBOX" && <Button variant="contained" onClick={() => handleMove("MYBOX")}>이동</Button>}
+						{mailboxType !== "TRASH" && <Button variant="contained" onClick={() => handleMove("TRASH")}>삭제</Button>}
 						{mailboxType === "TRASH" && <Button variant="contained" onClick={() => handleDelete("TRASH")}>영구삭제</Button>}
 					</Box>
 
@@ -359,7 +413,7 @@ export default function MailList({mailboxType}) {
 							>
 								{alertMessage}
 							</Alert>
-							)}
+						)}
 					</Grid>
         </Grid>
       }
@@ -393,19 +447,6 @@ export default function MailList({mailboxType}) {
 					/>
 				</>
 			)}
-      
-			
-			
-			{/* 메일함 이동 팝업 */}
-			<MailMoveDialog 
-				open={moveOpen}
-				onClose={() => setMoveOpen(false)}
-				onConfirm={async (targetType) => {
-					await handleMove(targetType);
-					setMoveOpen(false);
-				}}
-				mailboxType={mailboxType}
-			/>
     </MainCard>
 
   );

@@ -4,6 +4,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import AttachmentDropzone from 'features/attachment/components/AttachmentDropzone';
 import PersonAddAlt1OutlinedIcon from '@mui/icons-material/PersonAddAlt1Outlined';
 import OrganizationModal from 'features/organization/components/OrganizationModal';
+import Chip from "@mui/material/Chip";
+import Avatar from "@mui/material/Avatar";
+import DefaultAvatar from "assets/images/profile/default_profile.png";
+import { getImageUrl } from "api/getImageUrl";
 
 // material-ui
 import { useColorScheme } from '@mui/material/styles';
@@ -108,7 +112,6 @@ export default function MailWrite({mailId}) {
     } catch (err) {
       console.error(err);
 			setLoading(false);
-			
 			setAlertMessage("메일 발송에 실패했습니다."); setShowAlert(true);
     }
   };
@@ -180,9 +183,9 @@ export default function MailWrite({mailId}) {
 					// *** 재작성 ***
 					setTitle(data.title);
 					setContent(data.content);
-					setTo((data.to || []).map(extractEmail).join(', '));
-					setCc((data.cc || []).map(extractEmail).join(', '));
-					setBcc((data.bcc || []).map(extractEmail).join(', '));
+					setTo((data.to || []).map(r => r.email).join(', '));
+					setTo((data.cc || []).map(r => r.email).join(', '));
+					setTo((data.bcc || []).map(r => r.email).join(', '));
 	
 					// 기존 첨부파일 Dropzone에 맞게 가공
 					if (data.attachments) {
@@ -195,10 +198,40 @@ export default function MailWrite({mailId}) {
 					}
 
 					setList([
-						{ name: '수신자', empList: (data.to || []).map(mapToOrgEmp) },
-						{ name: '참조',   empList: (data.cc || []).map(mapToOrgEmp) },
-						{ name: '숨은참조', empList: (data.bcc || []).map(mapToOrgEmp) }
-					])
+						{ 
+							name: '수신자', 
+							empList: (data.to || []).map(r => ({
+								email: r.email,
+								name: r.name,
+								position: r.position,
+								departmentName: r.department,
+								profileImg: r.profileImg,
+								employeeId: r.email   // 고유값 역할
+							}))
+						},
+						{
+							name: '참조',
+							empList: (data.cc || []).map(r => ({
+								email: r.email,
+								name: r.name,
+								position: r.position,
+								departmentName: r.department,
+								profileImg: r.profileImg,
+								employeeId: r.email
+							}))
+						},
+						{
+							name: '숨은참조',
+							empList: (data.bcc || []).map(r => ({
+								email: r.email,
+								name: r.name,
+								position: r.position,
+								departmentName: r.department,
+								profileImg: r.profileImg,
+								employeeId: r.email
+							}))
+						}
+					]);
 				}
 
       })
@@ -300,7 +333,7 @@ export default function MailWrite({mailId}) {
 									>
 										받는 사람
 									</Button>
-									<Grid sx={{marginRight:'auto'}}>
+									<Grid sx={{marginLight:'auto', marginRight:'10px'}}>
 										{showAlert && (
 											<Alert
 												severity={"error"}
@@ -333,17 +366,113 @@ export default function MailWrite({mailId}) {
 								<TextField fullWidth label="제목" value={title} onChange = {e => setTitle(e.target.value)}/>
 							</Grid>
 							<Grid size={12}>
-								<TextField fullWidth label="수신자" value={to} InputProps={{readOnly:true}} onClick={openOrganModal}/>
+								<Box sx={{ mb: '4px', fontSize: '14px', fontWeight: 600, color: 'text.primary' }}>수신자</Box>
+								<Box 
+									sx={{
+										display: 'flex',
+										flexWrap: 'wrap',
+										gap: '6px',
+										cursor: 'pointer',
+										border: '1px solid #d0d7de',
+										borderRadius: '6px',
+										padding: '10px',
+										minHeight: '48px',
+										bgcolor: 'background.paper'
+									}} 
+									onClick={openOrganModal}>
+									{list[0].empList.map((e, idx) => (
+										<Chip
+											key={idx}
+											label={`${e.email} (${e.name})`}
+											avatar={
+												<Avatar
+													alt={e.name}
+													src={e.profileImg ? getImageUrl(e.profileImg) : DefaultAvatar}
+												/>
+											}
+											variant="outlined"
+											onDelete={() => {
+												const newList = [...list];
+												newList[0].empList = newList[0].empList.filter((_, i) => i !== idx);
+												setList(newList);
+											}}
+										/>
+									))}
+								</Box>
 							</Grid>
 							<Grid sx={{ display: ccBccValue ? 'block' : 'none' }} size={12}>
 								<Collapse in={ccBccValue}>
 								{ccBccValue && (
 									<Grid container spacing={gridSpacing}>
 										<Grid size={12}>
-											<TextField fullWidth label="참조" value={cc} InputProps={{readOnly:true}} onClick={openOrganModal}/>
+											<Box sx={{ mb: '4px', fontSize: '14px', fontWeight: 600, color: 'text.primary' }}>참조</Box>
+											<Box 
+												sx={{
+													display: 'flex',
+													flexWrap: 'wrap',
+													gap: '6px',
+													cursor: 'pointer',
+													border: '1px solid #d0d7de',
+													borderRadius: '6px',
+													padding: '10px',
+													minHeight: '48px',
+													bgcolor: 'background.paper'
+												}} 
+												onClick={openOrganModal}>
+												{list[1].empList.map((e, idx) => (
+													<Chip
+														key={idx}
+														label={`${e.email} (${e.name})`}
+														avatar={
+															<Avatar
+																alt={e.name}
+																src={e.profileImg ? getImageUrl(e.profileImg) : DefaultAvatar}
+															/>
+														}
+														variant="outlined"
+														onDelete={() => {
+															const newList = [...list];
+															newList[1].empList = newList[1].empList.filter((_, i) => i !== idx);
+															setList(newList);
+														}}
+													/>
+												))}
+											</Box>
 										</Grid>
 										<Grid size={12}>
-											<TextField fullWidth label="숨은 참조" value={bcc} InputProps={{readOnly:true}} onClick={openOrganModal}/>
+											<Box sx={{ mb: '4px', fontSize: '14px', fontWeight: 600, color: 'text.primary' }}>숨은참조</Box>
+											<Box 
+												sx={{
+													display: 'flex',
+													flexWrap: 'wrap',
+													gap: '6px',
+													cursor: 'pointer',
+													border: '1px solid #d0d7de',
+													borderRadius: '6px',
+													padding: '10px',
+													minHeight: '48px',
+													bgcolor: 'background.paper'
+												}} 
+												onClick={openOrganModal}>
+												{list[2].empList.map((e, idx) => (
+													<Chip
+														key={idx}
+														label={`${e.email} (${e.name})`}
+														avatar={
+															<Avatar
+																alt={e.name}
+																src={e.profileImg ? getImageUrl(e.profileImg) : DefaultAvatar}
+															/>
+														}
+														variant="outlined"
+														onDelete={() => {
+															const newList = [...list];
+															newList[1].empList = newList[1].empList.filter((_, i) => i !== idx);
+															setList(newList);
+														}}
+													/>
+												))}
+											</Box>
 										</Grid>
 									</Grid>
 								)}
