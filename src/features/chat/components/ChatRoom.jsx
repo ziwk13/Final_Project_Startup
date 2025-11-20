@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { Box, Paper } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import ChatHistory from './ChatHistory';
@@ -5,7 +6,8 @@ import { getMessages, markRoomAsRead, sendMessageWithFiles } from '../api/Chat';
 import MessageInput from './MessageInput';
 import { useStomp } from 'contexts/StompProvider';
 
-export default function ChatRoom({ roomId, user, theme }) {
+// [수정] roomInfo prop 추가
+export default function ChatRoom({ roomId, user, theme, roomInfo }) {
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -30,13 +32,15 @@ export default function ChatRoom({ roomId, user, theme }) {
         const formattedHistory = response.content
           .map((msg) => ({
             chatMessageId: msg.chatMessageId,
-            employeeId: msg.employeeId,
+            name: msg.name,
             senderName: msg.senderName,
             content: msg.content,
             createdAt: msg.createdAt,
             unreadCount: msg.unreadCount,
             attachments: msg.attachments,
-            messageType: msg.messageType
+            messageType: msg.messageType,
+            employeeId: msg.employeeId, // 본인 확인용 ID 매핑 명시
+            senderProfile: msg.senderProfile // [수정] 메시지 자체 프로필 정보 매핑
           }))
           .reverse();
         setMessages(formattedHistory);
@@ -60,13 +64,15 @@ export default function ChatRoom({ roomId, user, theme }) {
     const onMessageReceived = (payload) => {
       const formattedMessage = {
         chatMessageId: payload.chatMessageId,
-        employeeId: payload.employeeId,
+        name: payload.name,
         senderName: payload.senderName,
         content: payload.content,
         createdAt: payload.createdAt,
         unreadCount: payload.unreadCount,
         attachments: payload.attachments,
-        messageType: payload.messageType
+        messageType: payload.messageType,
+        employeeId: payload.employeeId,
+        senderProfile: payload.senderProfile // [수정] 실시간 메시지 프로필 매핑
       };
       setMessages((prevMessages) => [...prevMessages, formattedMessage]);
 
@@ -123,7 +129,7 @@ export default function ChatRoom({ roomId, user, theme }) {
       unreadSubscription.unsubscribe();
     };
 
-  }, [roomId, client, isConnected, chatRoomTopic, unreadUpdateTopic]);
+  }, [roomId, client, isConnected, chatRoomTopic, unreadUpdateTopic, user.id]);
 
   // 메시지 목록이 변경될 때마다 스크롤을 맨 아래로 이동
   useEffect(() => {
@@ -180,27 +186,40 @@ export default function ChatRoom({ roomId, user, theme }) {
       setLoading(false);
     }
   };
-    return (
-      <Paper sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {error && (
-          <Box sx={{ p: 2, m: 'auto', color: 'red' }}>
-            {error}
-          </Box>
-        )}
-        {!error && (
-          <>
-            {/* 채팅 내역 */}
-            <Box
-              ref={scrollContainerRef}
-              sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
-              <ChatHistory data={messages} theme={theme} user={user} />
-            </Box>
 
-            <Box sx={{ p: 2, pt: 0, borderTop: '1px solid #eee' }}>
-              <MessageInput onSend={handleSendMessage} disabled={loading} />
-            </Box>
-          </>
-        )}
-      </Paper>
-    );
-  }
+  return (
+    <Paper sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {error && (
+        <Box sx={{ p: 2, m: 'auto', color: 'red' }}>
+          {error}
+        </Box>
+      )}
+      {!error && (
+        <>
+          {/* 채팅 내역 */}
+          <Box
+            ref={scrollContainerRef}
+            sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
+            <ChatHistory 
+              data={messages} 
+              theme={theme} 
+              user={user} 
+              roomInfo={roomInfo} // [수정] 부모(ChatDrawer)로부터 받은 방 정보를 전달
+            />
+          </Box>
+
+          <Box sx={{ p: 2, pt: 0, borderTop: '1px solid #eee' }}>
+            <MessageInput onSend={handleSendMessage} disabled={loading} />
+          </Box>
+        </>
+      )}
+    </Paper>
+  );
+}
+
+ChatRoom.propTypes = {
+  roomId: PropTypes.string,
+  user: PropTypes.object,
+  theme: PropTypes.object,
+  roomInfo: PropTypes.object // [추가] PropType 정의
+};
