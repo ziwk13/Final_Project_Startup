@@ -11,6 +11,7 @@ import Avatar from '@mui/material/Avatar';
 // project imports
 import { gridSpacing } from 'store/constant';
 import AttachmentListView from 'features/attachment/components/AttachmentListView';
+import { getImageUrl, ImagePath } from 'api/getImageUrl';
 
 export default function ChatHistory({ data, theme, user, roomInfo }) {
   
@@ -145,8 +146,11 @@ export default function ChatHistory({ data, theme, user, roomInfo }) {
                     {/* 프로필 아바타 */}
                     <Avatar 
                       alt={history.senderName || '상대방'} 
-                      // 메시지 자체에 프로필이 있으면 사용, 없으면 방 정보(1:1의 경우) 사용
-                      src={history.senderProfile || roomInfo?.avatar} 
+                      src={
+                        history.senderProfile 
+                          ? getImageUrl(history.senderProfile, ImagePath.USERS) 
+                          : (roomInfo?.avatar ? getImageUrl(roomInfo.avatar, ImagePath.USERS) : undefined)
+                      } 
                       sx={{ width: 34, height: 34, mt: 0.5 }}
                     />
 
