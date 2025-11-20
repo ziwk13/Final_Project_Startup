@@ -221,7 +221,7 @@ export default function ApprovalForm({
                 setAlertInfo({
                   open: true,
                   message: '반려되었습니다.',
-                  severity: 'warning'
+                  severity: 'success'
                 });
 
                 setRejectModalOpen(false);

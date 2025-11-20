@@ -107,7 +107,7 @@ export default function AttendanceBasicCard({ isLoading }) {
       dispatch(fetchTodayAttendance(employeeId));
       dispatch(fetchThisWeekAttendance(employeeId));
     } catch (error) {
-      setStatusMessage(error?.message || '출근 처리 중 오류가 발생했습니다.');
+      setStatusMessage(error?.message || '오늘은 반차일입니다. 출근할 수 없습니다.');
     }
   };
 
@@ -194,7 +194,8 @@ export default function AttendanceBasicCard({ isLoading }) {
               statusMessage.includes('이미') ||
               statusMessage.includes('오류') ||
               statusMessage.includes('에러') ||
-              statusMessage.includes('실패')
+              statusMessage.includes('실패') ||
+              statusMessage.includes('있어')
                 ? 'error'
                 : 'success'
             }

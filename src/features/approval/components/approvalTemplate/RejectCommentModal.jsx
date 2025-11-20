@@ -5,8 +5,8 @@ export default function RejectCommentModal({ open, onClose, onSubmit }) {
   const [comment, setComment] = React.useState('');
 
   const handleSubmit = () => {
-    onSubmit(comment); // 부모에게 comment 전달
-    setComment(''); // 초기화
+    onSubmit(comment);
+    setComment('');
   };
 
   return (
