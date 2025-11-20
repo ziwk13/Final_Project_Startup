@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import { useState } from 'react';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -12,44 +11,24 @@ import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 
 // project imports
 import UserAvatar from './UserAvatar';
 
 // assets
-import MoreHorizTwoToneIcon from '@mui/icons-material/MoreHorizTwoTone';
+import CloseIcon from '@mui/icons-material/Close';
 
 export default function UserList({ users, setUser, onLeave }) {
   const theme = useTheme();
 
-  // 메뉴 제어를 위한 상태
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedRoomId, setSelectedRoomId] = useState(null);
 
-  // 메뉴 열기
-  const handleMenuClick = (event, roomId) => {
+  // 나가기 버튼 클릭 핸들러 (바로 onLeave 호출)
+  const handleCloseClick = (event, roomId) => {
     event.stopPropagation(); // 리스트 클릭 방지
-    setAnchorEl(event.currentTarget);
-    setSelectedRoomId(roomId);
-  };
-
-  // 메뉴 닫기
-  const handleMenuClose = (event) => {
-    if (event) event.stopPropagation();
-    setAnchorEl(null);
-    setSelectedRoomId(null);
-  };
-
-  // 나가기 버튼 클릭
-  const handleLeaveClick = (event) => {
-    event.stopPropagation();
-    if (onLeave && selectedRoomId) {
-      onLeave(selectedRoomId); // ChatDrawer로 ID 전달
+    if (onLeave) {
+      onLeave(roomId); // ChatDrawer로 ID 전달
     }
-    handleMenuClose();
   };
 
   return (
@@ -63,11 +42,11 @@ export default function UserList({ users, setUser, onLeave }) {
             secondaryAction={
               <IconButton
                 edge="end"
-                aria-label="more"
-                onClick={(e) => handleMenuClick(e, user.id)}
+                aria-label="leave-room"
+                onClick={(e) => handleCloseClick(e, user.id)} // 새로운 핸들러 연결
                 sx={{ color: theme.palette.text.secondary }}
               >
-                <MoreHorizTwoToneIcon fontSize="small" />
+                <CloseIcon fontSize="small" /> {/* 아이콘 변경 */}
               </IconButton>
             }
           >
@@ -145,23 +124,6 @@ export default function UserList({ users, setUser, onLeave }) {
           </ListItem>
         ))}
       </List>
-
-      {/* 드롭다운 메뉴 */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-      >
-        <MenuItem onClick={handleLeaveClick}>채팅방 나가기</MenuItem>
-      </Menu>
     </>
   );
 }
