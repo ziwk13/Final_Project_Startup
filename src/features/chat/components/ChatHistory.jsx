@@ -27,7 +27,6 @@ export default function ChatHistory({ data, theme, user }) {
       return isoString;
     }
   };
-  console.log('history', history);
 
   return (
     <Grid container spacing={gridSpacing}>
