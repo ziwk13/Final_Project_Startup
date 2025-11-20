@@ -42,13 +42,14 @@ export default function ChatRoom({ roomId, user, theme }) {
         setMessages(formattedHistory);
       } catch (error) {
         console.error('이전 메시지 불러오기 실패', error);
-        setError(error);
+        const errorMessage = error.response?.data?.message || error.message || '채팅 내역을 불러오는 중 오류가 발생했습니다.';
+        setError(errorMessage);
       }
     };
     fetchHistory();
   }, [roomId]);
 
-  // 연결, 구독, 구독 해제 관리 useEffect 수정
+  // 연결, 구독, 구독 해제 관리 useEffect
   useEffect(() => {
     // client가 존재하고, 연결(isConnected)이 true일 때만 구독 로직 실행
     if (!client || !isConnected || !roomId) {
