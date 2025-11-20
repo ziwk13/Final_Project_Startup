@@ -22,7 +22,6 @@ import CloseIcon from '@mui/icons-material/Close';
 export default function UserList({ users, setUser, onLeave }) {
   const theme = useTheme();
 
-
   // 나가기 버튼 클릭 핸들러 (바로 onLeave 호출)
   const handleCloseClick = (event, roomId) => {
     event.stopPropagation(); // 리스트 클릭 방지
@@ -40,19 +39,33 @@ export default function UserList({ users, setUser, onLeave }) {
             disablePadding
             divider
             secondaryAction={
-              <IconButton
-                edge="end"
-                aria-label="leave-room"
-                onClick={(e) => handleCloseClick(e, user.id)} // 새로운 핸들러 연결
-                sx={{ color: theme.palette.text.secondary }}
-              >
-                <CloseIcon fontSize="small" /> {/* 아이콘 변경 */}
-              </IconButton>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                {user.unReadChatCount !== 0 && (
+                  <Chip
+                    label={user.unReadChatCount}
+                    color="secondary"
+                    size="small"
+                    sx={{
+                      height: 20,
+                      minWidth: 20,
+                      '& .MuiChip-label': { px: 0.5 }
+                    }}
+                  />
+                )}
+                <IconButton
+                  edge="end"
+                  aria-label="leave-room"
+                  onClick={(e) => handleCloseClick(e, user.id)}
+                  sx={{ color: theme.palette.text.secondary }}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Stack>
             }
           >
             <ListItemButton
               onClick={() => setUser(user)}
-              sx={{ pr: 7 }} // secondaryAction 공간 확보
+              sx={{ pr: user.unReadChatCount > 0 ? 11 : 7 }}
             >
               <ListItemAvatar>
                 <UserAvatar user={user} />
@@ -97,25 +110,15 @@ export default function UserList({ users, setUser, onLeave }) {
                       <Typography
                         variant="caption"
                         component="span"
-                        sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}
+                        sx={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          display: 'block'
+                        }}
                       >
                         {user.lastMessage || '대화 내용 없음'}
                       </Typography>
-                    </Grid>
-                    <Grid component="span">
-                      {user.unReadChatCount !== 0 && (
-                        <Chip
-                          label={user.unReadChatCount}
-                          component="span"
-                          color="secondary"
-                          size="small"
-                          sx={{ 
-                            height: 20, 
-                            minWidth: 20,
-                            '& .MuiChip-label': { px: 0.5 }
-                           }}
-                        />
-                      )}
                     </Grid>
                   </Grid>
                 }
