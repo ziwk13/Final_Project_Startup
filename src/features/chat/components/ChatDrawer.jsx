@@ -21,6 +21,8 @@ import ChatRoom from './ChatRoom';
 import { leaveRoom, getRooms, inviteToRoom, getRoomById, markRoomAsRead } from '../api/Chat';
 import { useStomp } from 'contexts/StompProvider';
 import OrganizationModal from '../../organization/components/OrganizationModal';
+import UserAvatar from './UserAvatar';
+import UserList from './UserList';
 
 
 // assets
