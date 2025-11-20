@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 // material-ui
 import Box from '@mui/material/Box';
@@ -18,8 +18,6 @@ import { gridSpacing } from 'store/constant';
 import SimpleBar from 'ui-component/third-party/SimpleBar';
 import ChatHeader from './ChatHeader';
 import ChatRoom from './ChatRoom';
-import UserAvatar from './UserAvatar';
-import UserList from './UserList';
 import { leaveRoom, getRooms, inviteToRoom, getRoomById, markRoomAsRead } from '../api/Chat';
 import { useStomp } from 'contexts/StompProvider';
 import OrganizationModal from '../../organization/components/OrganizationModal';
