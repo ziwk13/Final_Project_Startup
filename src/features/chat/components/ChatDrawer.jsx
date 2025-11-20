@@ -41,6 +41,7 @@ const mapDtoToUser = (room) => ({
   unReadChatCount: room.unreadCount,
   lastMessageTimestamp: room.lastMessageCreatedAt,
   memberCount: room.memberCount,
+  isTeam: room.isTeam || (room.rommType === 'GROUP'),
 });
 
 // 채팅방 목록을 최신 메시지 시간순으로 정렬하는 헬퍼 함수
@@ -306,7 +307,7 @@ export default function ChatDrawer({
                 <Grid container spacing={2} sx={{ alignItems: 'center', flexWrap: 'nowrap' }}>
                   <Grid>
                     <UserAvatar user={{
-                      avatar: user?.avatar || null,
+                      avatar: user?.profileImg || null,
                       name: user?.name || 'User',
                       position: user?.position
                     }} />
