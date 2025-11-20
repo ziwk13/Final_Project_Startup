@@ -1,12 +1,7 @@
 import { useEffect, useState, useTransition } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 // material-ui
-import Box from '@mui/material/Box';
 import { styled, useTheme } from '@mui/material/styles';
-
-// third party 추후 인스톨 후 구현 예정
-// import EmojiPicker, { SkinTones } from 'emoji-picker-react';
 
 // project imports
 import { useChat } from 'contexts/ChatContext';
@@ -95,9 +90,22 @@ export default function ChatMainPage() {
       if (initialUsersForCreateModal.length > 0) {
         setInitialUsersForCreateModal([]);
         setOpenCreateModal(true);
+        return;
       }
-      // 새 채팅이었다면 그냥 닫기
+      // 새 채팅이었다면 모달 띄우기
+      setErrorMessage("초대할 대상을 선택 해주세요.");
+      setIsErrorModalOpen(true);
       return;
+    }
+    // 선택된 사용자 목록에 현재 로그인한 사용자가 있는지 확인
+    const isSelfIncluded = selectedEmployees.some(
+      (emp) => emp.employeeId === authUser.employeeId
+    );
+
+    if (isSelfIncluded) {
+      setErrorMessage("사용자 본인은 초대할 수 없습니다.");
+      setIsErrorModalOpen(true);
+      return; // 더 이상 진행하지 않고 종료
     }
     // 1명 선택
     if (selectedEmployees.length === 1) {
@@ -164,22 +172,6 @@ export default function ChatMainPage() {
     };
     setData((prevState) => [...prevState, newMessage]);
   };
-
-  // // handle emoji
-  // const onEmojiClick = (emojiObject, event) => {
-  //   setMessage(message + emojiObject.emoji);
-  // };
-
-  // const [anchorElEmoji, setAnchorElEmoji] = React.useState(); /** No single type can cater for all elements */
-  // const handleOnEmojiButtonClick = (event) => {
-  //   setAnchorElEmoji(anchorElEmoji ? null : event?.currentTarget);
-  // };
-
-  // const emojiOpen = Boolean(anchorElEmoji);
-  // const emojiId = emojiOpen ? 'simple-popper' : undefined;
-  // const handleCloseEmoji = () => {
-  //   setAnchorElEmoji(null);
-  // };
 
   return (
     <>
