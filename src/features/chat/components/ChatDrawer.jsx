@@ -5,10 +5,17 @@ import { useState, useEffect, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
-import OutlinedInput from '@mui/material/OutlinedInput';
 import { useColorScheme, useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+
+// icons
+import { IconPlus } from '@tabler/icons-react';
 
 // project imports
 import { ThemeMode } from 'config';
@@ -23,12 +30,6 @@ import { useStomp } from 'contexts/StompProvider';
 import OrganizationModal from '../../organization/components/OrganizationModal';
 import UserAvatar from './UserAvatar';
 import UserList from './UserList';
-
-
-// assets
-import SearchTwoToneIcon from '@mui/icons-material/SearchTwoTone';
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
-import { IconPlus } from '@tabler/icons-react';
 import useConfig from 'hooks/useConfig';
 
 
@@ -45,11 +46,8 @@ const mapDtoToUser = (room) => ({
 // 채팅방 목록을 최신 메시지 시간순으로 정렬하는 헬퍼 함수
 const sortRoomsByTimestamp = (rooms) => {
   return [...rooms].sort((a, b) => {
-    // lastMessageTimestamp가 없는 방은 맨 뒤로 보내짐
     const timeA = a.lastMessageTimestamp ? new Date(a.lastMessageTimestamp).getTime() : 0;
     const timeB = b.lastMessageTimestamp ? new Date(b.lastMessageTimestamp).getTime() : 0;
-
-    // 내림차순
     return timeB - timeA;
   });
 };
@@ -70,45 +68,52 @@ export default function ChatDrawer({
 
   const { openChatWithUser } = useChat();
 
-
-  // 상태 추가(알림 클릭 대응)
   const [currentRoom, setCurrentRoom] = useState(selectedUser);
-  // 채팅방 정보를 fetch 중인지 여부
   const [isLoadingRoom, setIsLoadingRoom] = useState(false);
+  const [chatRooms, setChatRooms] = useState([]);
 
-  // 채팅방 나가기 모달 상태
+  // ==============================|| 채팅방 나가기 로직 ||============================== //
+  
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
+  // 실제로 나갈 채팅방 ID (헤더에서 클릭했거나, 목록에서 클릭한 방 ID)
+  const [leaveTargetRoomId, setLeaveTargetRoomId] = useState(null);
 
-  // 초대하기 모달 상태
-  const [inviteModalOpen, setInviteModalOpen] = useState(false);
-  // 초대 모달에 전달할 초기 목록
-  const initialInviteList = [{ name: '초대 대상자', empList: [] }];
-  const [inviteList, setInviteList] = useState(initialInviteList);
+  // 1. 헤더에서 '나가기' 클릭 (현재 보고 있는 방)
+  const handleLeaveFromHeader = () => {
+    if (currentRoom) {
+      setLeaveTargetRoomId(currentRoom.id);
+      setLeaveModalOpen(true);
+    }
+  };
 
-  // 에러 메시지 출력 모달
-  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  const effectiveRoomId = currentRoom ? currentRoom.id : null;
-
-  // 채팅방 나가기 메뉴 클릭
-  const handleLeaveClick = () => {
+  // 2. 목록에서 '나가기' 클릭 (특정 방)
+  const handleLeaveFromList = (roomId) => {
+    setLeaveTargetRoomId(roomId);
     setLeaveModalOpen(true);
   };
 
   // 모달 닫기
   const handleLeaveModalClose = () => {
     setLeaveModalOpen(false);
+    setLeaveTargetRoomId(null); // 타겟 초기화
   };
 
-  // 모달 나가기
+  // 최종 나가기 확인 (API 호출)
   const handleConfirmLeave = async () => {
-    if (!effectiveRoomId) return;
+    if (!leaveTargetRoomId) return;
 
     try {
-      await leaveRoom(effectiveRoomId);
+      await leaveRoom(leaveTargetRoomId);
+      
+      // 만약 현재 보고 있는 방을 나갔다면 채팅 화면 닫기
+      if (currentRoom && String(currentRoom.id) === String(leaveTargetRoomId)) {
+        onCloseChat();
+      }
+      
+      // 목록 갱신
+      fetchChatRooms(); 
       handleLeaveModalClose();
-      onCloseChat();
+
     } catch (error) {
       console.error('채팅방 나가기 실패: ', error);
       setErrorMessage("채팅방을 나가는 중 오류가 발생했습니다");
@@ -117,46 +122,51 @@ export default function ChatDrawer({
     }
   };
 
-  // 초대하기 메뉴 클릭 핸들러 (ChatHeader에서 호출)
+  // ==============================|| 기타 모달 및 기능 ||============================== //
+
+  // 초대하기 모달
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const initialInviteList = [{ name: '초대 대상자', empList: [] }];
+  const [inviteList, setInviteList] = useState(initialInviteList);
+
+  // 에러 모달
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const effectiveRoomId = currentRoom ? currentRoom.id : null;
+
+  // 초대하기 메뉴 클릭 핸들러
   const handleInviteClick = () => {
-    setInviteList(initialInviteList); // 모달을 열 때마다 선택 목록 초기화
+    setInviteList(initialInviteList);
     setInviteModalOpen(true);
   };
 
-  // 초대 모달 닫기 핸들러
   const handleInviteModalClose = () => {
     setInviteModalOpen(false);
   };
 
-  // 초대 모달 '적용' 버튼 클릭 핸들러 (API 호출)
   const handleInviteApply = async (appliedList) => {
-    // 현재 채팅방 ID (selectedUser.id)가 있는지 확인
     if (!effectiveRoomId) return;
 
-    // OrganizationModal에서 '초대 대상자' 박스의 empList를 찾음
     const inviteeBox = appliedList.find(item => item.name === '초대 대상자');
     if (!inviteeBox || inviteeBox.empList.length === 0) {
-      handleInviteModalClose(); // 모달 닫기
+      handleInviteModalClose();
       return;
     }
-
-    // API가 요구하는 형식 [1, 2, 3] 으로 변환
     const inviteeEmployeeIds = inviteeBox.empList.map(emp => emp.employeeId);
 
     try {
-      // 백엔드 API 호출 (API 파일에 inviteToRoom이 정의되어 있어야 함)
-      // API는 (roomId, body) 형태를 받는다고 가정
       await inviteToRoom(effectiveRoomId, inviteeEmployeeIds);
-
-      handleInviteModalClose(); // 성공 시 모달 닫기
+      handleInviteModalClose();
     } catch (error) {
       setErrorMessage("초대에 실패 했습니다. 다시 시도해주세요.");
       setIsErrorModalOpen(true);
-      handleInviteModalClose(); // 실패 시에도 모달 닫기
+      handleInviteModalClose();
     }
   };
 
-  const [chatRooms, setChatRooms] = useState([]);
+  // ==============================|| 데이터 로드 및 STOMP ||============================== //
+
   const { client, isConnected } = useStomp();
 
   const fetchChatRooms = useCallback(async () => {
@@ -170,11 +180,10 @@ export default function ChatDrawer({
     }
   }, []);
 
-  // 알림 클릭 시 방 정보 로드
+  // 알림/선택에 따른 방 정보 로드 로직
   useEffect(() => {
     const markRoomAsReadInState = (idToMark) => {
       if (!idToMark) return;
-
       const roomToUpdate = chatRooms.find(
         (room) => room.id === idToMark && room.unReadChatCount > 0
       );
@@ -186,11 +195,10 @@ export default function ChatDrawer({
         );
       }
     };
-    // 목록에서 클릭
+
     if (selectedUser) {
       const roomFromList = chatRooms.find(room => room.id === selectedUser.id);
       if (roomFromList) {
-        // 목록에 이미 있는 방
         setCurrentRoom(roomFromList);
         setIsLoadingRoom(false);
         markRoomAsReadInState(selectedUser.id);
@@ -198,7 +206,6 @@ export default function ChatDrawer({
           markRoomAsRead(selectedUser.id);
         }
       } else {
-        // 목록에 없는 방(새로 생성된 채팅ㅂ아)
         setIsLoadingRoom(true);
         markRoomAsReadInState(selectedUser.id);
         markRoomAsRead(selectedUser.id);
@@ -209,58 +216,47 @@ export default function ChatDrawer({
           })
           .catch(error => {
             console.error("새 채팅방 정보 로드 실패", error);
-            onCloseChat();  // 실패 시 목록으로 복귀
+            onCloseChat();
           })
-          .finally(() => {
-            setIsLoadingRoom(false);
-          })
+          .finally(() => setIsLoadingRoom(false))
       }
 
-    }
-    // 알림 클릭 흐름
-    else if (roomId) {
+    } else if (roomId) {
       setIsLoadingRoom(true);
       markRoomAsReadInState(roomId);
       markRoomAsRead(roomId);
-
-      getRoomById(roomId) // 백엔드 API 호출
+      getRoomById(roomId)
         .then(roomDto => {
           const mappedRoom = mapDtoToUser(roomDto);
           setCurrentRoom(mappedRoom);
         })
         .catch(err => {
           console.error("Failed to fetch room details by ID", err);
-          onCloseChat(); // 실패 시 목록으로 복귀
+          onCloseChat();
         })
-        .finally(() => {
-          setIsLoadingRoom(false);
-        });
-    }
-    // 둘 다 null (채팅방 닫힘)
-    else {
+        .finally(() => setIsLoadingRoom(false));
+    } else {
       setCurrentRoom(null);
       setIsLoadingRoom(false);
     }
   }, [selectedUser, roomId, onCloseChat, chatRooms]);
 
-  // 채팅방 목록 로드
+  // 목록 초기 로드
   useEffect(() => {
     if (!selectedUser) {
       fetchChatRooms();
     }
   }, [selectedUser, fetchChatRooms]);
 
+  // STOMP 리스트 업데이트 구독
   useEffect(() => {
     if (client && isConnected) {
       const listUpdateQueue = '/user/queue/chat-list-update';
-
-      const subscription = client.subscribe(listUpdateQueue, (message) => {
+      const subscription = client.subscribe(listUpdateQueue, () => {
         fetchChatRooms();
       });
       return () => {
-        if (subscription) {
-          subscription.unsubscribe();
-        }
+        if (subscription) subscription.unsubscribe();
       };
     }
   }, [client, isConnected, fetchChatRooms]);
@@ -282,6 +278,7 @@ export default function ChatDrawer({
     >
       {!(currentRoom || isLoadingRoom) ? (
         <>
+          {/* 채팅방 목록 뷰 */}
           <Box sx={{ p: 3, pb: 2 }}>
             <Grid container spacing={gridSpacing}>
               <Grid size={12}>
@@ -301,39 +298,23 @@ export default function ChatDrawer({
                       <IconPlus />
                     </IconButton>
                   </Grid>
-
                 </Grid>
-              </Grid>
-              <Grid size={12}>
-                <OutlinedInput
-                  fullWidth
-                  id="input-search-header"
-                  placeholder="채팅방 검색"
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <SearchTwoToneIcon fontSize="small" />
-                    </InputAdornment>
-                  }
-                />
               </Grid>
             </Grid>
           </Box>
-          <SimpleBar
-            sx={{
-              overflowX: 'hidden',
-              flex: 1,
-            }}
-          >
+          <SimpleBar sx={{ overflowX: 'hidden', flex: 1 }}>
             <Box sx={{ p: 3, pt: 0 }}>
               <UserList
                 users={chatRooms}
                 setUser={openChatWithUser}
+                onLeave={handleLeaveFromList} // 목록에서 나가기 핸들러 전달
               />
             </Box>
           </SimpleBar>
         </>
       ) : (
         <>
+          {/* 채팅방 내부 뷰 */}
           <Box sx={{ p: 3, pb: 2 }}>
             {isLoadingRoom ? (
               <Typography>채팅방 정보 로딩 중...</Typography>
@@ -341,7 +322,7 @@ export default function ChatDrawer({
               <ChatHeader
                 user={currentRoom}
                 onClose={onCloseChat}
-                onLeaveRoom={handleLeaveClick}
+                onLeaveRoom={handleLeaveFromHeader} // 헤더에서 나가기 핸들러 전달
                 onInviteClick={handleInviteClick}
               />
             )}
@@ -352,64 +333,69 @@ export default function ChatDrawer({
                 roomId={effectiveRoomId}
                 user={{ id: user.employeeId, name: user.name }}
                 theme={theme}
+                roomInfo={currentRoom} // 방 정보를 ChatRoom으로 전달
               />
             )}
           </Box>
-
-          <Dialog
-            open={leaveModalOpen}
-            onClose={handleLeaveModalClose}
-            aria-labelledby="leave-chat-dialog-title"
-            aria-describedby="leave-chat-dialog-description"
-          >
-            <DialogTitle id="leave-chat-dialog-title">
-              {"채팅방 나가기"}
-            </DialogTitle>
-            <DialogContent>
-              <DialogContentText id="leave-chat-dialog-description">
-                채팅방을 나가시겠습니까?
-                <br />
-                채팅방을 나가면 대화 내역이 삭제되어 복구할 수 없습니다.
-              </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleConfirmLeave} color="error">
-                나가기
-              </Button>
-              <Button onClick={handleLeaveModalClose} autoFocus>
-                취소
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          <OrganizationModal
-            open={inviteModalOpen}
-            onClose={handleInviteModalClose}
-            list={inviteList}
-            setList={handleInviteApply} // '적용' 버튼 클릭 시 API 호출 함수(handleInviteApply) 실행
-          />
-          <Dialog
-            open={isErrorModalOpen}
-            onClose={() => setIsErrorModalOpen(false)}
-            aria-labelledby="error-alert-dialog-title"
-            aria-describedby="error-alert-dialog-description"
-          >
-            <DialogTitle id="error-alert-dialog-title">
-              {"알림"}
-            </DialogTitle>
-            <DialogContent>
-              <DialogContentText id="error-alert-dialog-description">
-                {errorMessage}
-              </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setIsErrorModalOpen(false)} autoFocus>
-                확인
-              </Button>
-            </DialogActions>
-          </Dialog>
         </>
       )}
+
+      {/* 공통: 채팅방 나가기 확인 모달 */}
+      <Dialog
+        open={leaveModalOpen}
+        onClose={handleLeaveModalClose}
+        aria-labelledby="leave-chat-dialog-title"
+        aria-describedby="leave-chat-dialog-description"
+      >
+        <DialogTitle id="leave-chat-dialog-title">
+          {"채팅방 나가기"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="leave-chat-dialog-description">
+            채팅방을 나가시겠습니까?
+            <br />
+            채팅방을 나가면 대화 내역이 삭제되어 복구할 수 없습니다.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleConfirmLeave} color="error">
+            나가기
+          </Button>
+          <Button onClick={handleLeaveModalClose} autoFocus>
+            취소
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 공통: 초대 모달 */}
+      <OrganizationModal
+        open={inviteModalOpen}
+        onClose={handleInviteModalClose}
+        list={inviteList}
+        setList={handleInviteApply}
+      />
+
+      {/* 공통: 에러 모달 */}
+      <Dialog
+        open={isErrorModalOpen}
+        onClose={() => setIsErrorModalOpen(false)}
+        aria-labelledby="error-alert-dialog-title"
+        aria-describedby="error-alert-dialog-description"
+      >
+        <DialogTitle id="error-alert-dialog-title">
+          {"알림"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="error-alert-dialog-description">
+            {errorMessage}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsErrorModalOpen(false)} autoFocus>
+            확인
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
