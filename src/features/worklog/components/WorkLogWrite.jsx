@@ -19,9 +19,9 @@ function WorkLogWrite({worklogId}) {
 	const [alertMessage, setAlertMessage] = useState('');
 
 	const [valueBasic, setValueBasic] = React.useState(new Date());	// 업무일
-	const [writer, setWriter] = useState();	// 작성자
-	const [title, setTitle] = useState();		// 제목
-	const [content, setContent] = useState();	// 업무내용
+	const [writer, setWriter] = useState('');	// 작성자
+	const [title, setTitle] = useState('');		// 제목
+	const [content, setContent] = useState('');	// 업무내용
 
 	// 업무 코드 조회
 	const [workTypes, setWorkTypes] = useState([]);
@@ -140,7 +140,6 @@ function WorkLogWrite({worklogId}) {
 						<Grid container spacing={gridSpacing}>
 							<Grid size={12} sx={{display:'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 								<Box sx={{display:'flex', justifyContent:'space-between', gap:'5px'}}>
-									<Button variant="contained" onClick={() => navigate(-1)} sx={{padding:'0 16px', height:'35px', lineHeight:'35px'}}>뒤로</Button>
 									<Button variant="contained" onClick={handleSubmitWorkLog} sx={{padding:'0 16px', height:'35px', lineHeight:'35px'}}>등록</Button>
 								</Box>
 
@@ -178,7 +177,7 @@ function WorkLogWrite({worklogId}) {
 									</LocalizationProvider>
 								</Box>
 								<Box sx={{flex:1}}>
-									<TextField fullWidth label="작성자" value={writer?.name || ''} InputProps={{readOnly:true}}></TextField> 
+									<TextField fullWidth label="작성자" value={`${writer?.name || ''} (${writer?.department})`} InputProps={{readOnly:true}}></TextField> 
 								</Box>
 							</Grid>
 							<Grid size={12} sx={{display:'flex', gap:'20px'}}>
