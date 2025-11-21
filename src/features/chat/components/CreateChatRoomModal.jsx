@@ -103,7 +103,6 @@ export default function CreateChatRoomModal({ open, onClose, onSuccess, preSelec
     const userIds = selectedUsers.map((user) => user.id);
 
     if (userIds.length === 0) {
-      alert('채팅방에 초대할 사용자를 1명 이상 선택해주세요.');
       return;
     }
 
@@ -138,12 +137,12 @@ export default function CreateChatRoomModal({ open, onClose, onSuccess, preSelec
       }
 
       const mappedNewRoom = {
-        id: newRoom.chatRoomId, // (예시) 키 이름이 다를 경우
+        id: newRoom.chatRoomId,
         name: finalRoomName,
         avatar: avatar,
         position: position,
         isTeam: isTeam,
-        lastMessage: '', // 새 방이므로
+        lastMessage: '',
         unReadChatCount: 0,
       };
 
