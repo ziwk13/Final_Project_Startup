@@ -38,8 +38,8 @@ export default function ChatRoom({ roomId, user, theme, roomInfo }) {
             unreadCount: msg.unreadCount,
             attachments: msg.attachments,
             messageType: msg.messageType,
-            employeeId: msg.employeeId, // 본인 확인용 ID 매핑 명시
-            senderProfile: msg.senderProfile // [수정] 메시지 자체 프로필 정보 매핑
+            employeeId: msg.employeeId,
+            senderProfile: msg.senderProfile
           }))
           .reverse();
         setMessages(formattedHistory);
@@ -71,7 +71,7 @@ export default function ChatRoom({ roomId, user, theme, roomInfo }) {
         attachments: payload.attachments,
         messageType: payload.messageType,
         employeeId: payload.employeeId,
-        senderProfile: payload.senderProfile // [수정] 실시간 메시지 프로필 매핑
+        senderProfile: payload.senderProfile
       };
       setMessages((prevMessages) => [...prevMessages, formattedMessage]);
 
