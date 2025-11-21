@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography';
 
 // project imports
 import UserAvatar from './UserAvatar';
+import { getImageUrl } from 'api/getImageUrl';
 // assets
 import MoreHorizTwoToneIcon from '@mui/icons-material/MoreHorizTwoTone';
 import { IconArrowLeft } from '@tabler/icons-react';
@@ -60,8 +61,8 @@ export default function ChatHeader({
               <UserAvatar 
                 user={{
                   ...user,
-                  avatar: user.profileImg, // profileImg를 avatar로 매핑
-                  isTeam: user.isTeam      // 팀 여부 전달
+                  avatar: user.avatar,
+                  isTeam: user.isTeam
                 }} 
               />
             </Grid>
@@ -136,7 +137,7 @@ ChatHeader.propTypes = {
   user: PropTypes.shape({
     name: PropTypes.string,
     displayName: PropTypes.string,
-    profileImg: PropTypes.string,
+    avatar: PropTypes.string,
     online_status: PropTypes.string,
     positionName: PropTypes.string,
     isTeam: PropTypes.bool,
