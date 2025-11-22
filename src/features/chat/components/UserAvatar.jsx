@@ -6,6 +6,7 @@ import GroupIcon from '@mui/icons-material/Group';
 
 // project imports
 import { getImageUrl, ImagePath } from 'api/getImageUrl';
+import DefaultAvatar from 'assets/images/profile/default_profile.png';
 
 export default function UserAvatar({ user }) {
   
@@ -27,7 +28,7 @@ export default function UserAvatar({ user }) {
   return (
     <Avatar 
       alt={user.name} 
-      src={user.avatar ? getImageUrl(user.avatar, ImagePath.USERS) : undefined} 
+      src={user.avatar ? getImageUrl(user.avatar, ImagePath.USERS) : DefaultAvatar} 
     />
   );
 }
