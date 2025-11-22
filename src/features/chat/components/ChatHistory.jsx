@@ -6,12 +6,13 @@ import CardContent from '@mui/material/CardContent';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import Avatar from '@mui/material/Avatar';
 
 // project imports
 import { gridSpacing } from 'store/constant';
 import AttachmentListView from 'features/attachment/components/AttachmentListView';
 import { getImageUrl, ImagePath } from 'api/getImageUrl';
+import DefaultAvatar from 'assets/images/profile/default_profile.png';
+import UserAvatar from './UserAvatar';
 
 export default function ChatHistory({ data, theme, user, roomInfo }) {
   
@@ -144,13 +145,11 @@ export default function ChatHistory({ data, theme, user, roomInfo }) {
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                     
                     {/* 프로필 아바타 */}
-                    <Avatar 
-                      alt={history.senderName || '상대방'} 
-                      src={
-                        history.senderProfile 
-                          ? getImageUrl(history.senderProfile, ImagePath.USERS) 
-                          : (roomInfo?.avatar ? getImageUrl(roomInfo.avatar, ImagePath.USERS) : undefined)
-                      } 
+                    <UserAvatar
+                      user={{
+                        name: history.senderName || '상대방',
+                        avatar: history.senderProfile || roomInfo?.avatar 
+                      }}
                       sx={{ width: 34, height: 34, mt: 0.5 }}
                     />
 
