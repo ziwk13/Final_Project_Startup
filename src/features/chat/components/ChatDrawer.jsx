@@ -16,6 +16,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 
 // icons
 import { IconPlus } from '@tabler/icons-react';
+import EmptyNotificationIcon from 'assets/icons/EmptyNotificationIcon';
 
 // project imports
 import { ThemeMode } from 'config';
@@ -324,13 +325,39 @@ export default function ChatDrawer({
               </Grid>
             </Grid>
           </Box>
+          
+          {/* 목록이 비었을 때 아이콘 표시, 아니면 리스트 표시 */}
           <SimpleBar sx={{ overflowX: 'hidden', flex: 1 }}>
-            <Box sx={{ p: 3, pt: 0 }}>
-              <UserList
-                users={chatRooms}
-                setUser={openChatWithUser}
-                onLeave={handleLeaveFromList} // 목록에서 나가기 핸들러 전달
-              />
+            <Box sx={{ p: 3, pt: 0, height: '100%' }}>
+              {chatRooms.length === 0 ? (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%', // 전체 높이 사용
+                    minHeight: '300px',
+                    textAlign: 'center',
+                    opacity: 0.6,
+                    mt: 2 // 상단 여백 약간 추가
+                  }}
+                >
+                  <EmptyNotificationIcon style={{ width: '120px', height: 'auto', marginBottom: '16px' }} />
+                  <Typography variant="h4" color="textSecondary" gutterBottom>
+                    참여 중인 채팅방이 없습니다.
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    새로운 채팅을 시작해보세요!
+                  </Typography>
+                </Box>
+              ) : (
+                <UserList
+                  users={chatRooms}
+                  setUser={openChatWithUser}
+                  onLeave={handleLeaveFromList} 
+                />
+              )}
             </Box>
           </SimpleBar>
         </>
