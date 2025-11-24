@@ -313,7 +313,7 @@ export default function AttendanceBasicCard({ isLoading }) {
                 variant="outlined"
                 color="primary"
                 onClick={handleWorkStatusClick}
-                sx={{ borderRadius: 2, width: isSmall ? 80 : 110, height: isSmall ? 35 : 40 }}
+                sx={{ borderRadius: 2, width: isSmall ? 80 : 130, height: isSmall ? 35 : 40 }}
               >
                 근무상태 변경
               </Button>
