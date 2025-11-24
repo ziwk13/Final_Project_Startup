@@ -11,6 +11,7 @@ import postCommentAPI from '../api/postCommentAPI';
 import postViewLogAPI from '../api/postViewLogAPI';
 import useAuth from 'hooks/useAuth';
 import AttachmentDropzone from 'features/attachment/components/AttachmentDropzone';
+import AttachmentListView from 'features/attachment/components/AttachmentListView';
 
 // 날짜 포맷 함수
 const formatDate = (dateString) => {
@@ -33,8 +34,8 @@ export default function PostDetail({ postId }) {
     const [editContent, setEditContent] = useState('');
 
     // 첨부파일 관리
-    const [deletedFiles, setDeletedFiles] = useState([]); // 삭제할 기존 파일 ID들
-    const [newFiles, setNewFiles] = useState([]); // 새 업로드 파일들
+    const [deletedFiles, setDeletedFiles] = useState([]);
+    const [newFiles, setNewFiles] = useState([]);
 
     // 조회수
     const [viewCount, setViewCount] = useState(0);
@@ -42,8 +43,9 @@ export default function PostDetail({ postId }) {
     // 게시글 삭제 모달
     const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
 
-    // 게시글 상세 조회
-
+    /* -------------------------------
+       게시글 상세 조회
+    ------------------------------- */
     const fetchPostDetail = useCallback(async () => {
         try {
             const data = await postAPI.detailPost(postId);
@@ -59,7 +61,9 @@ export default function PostDetail({ postId }) {
         }
     }, [postId]);
 
-    // 댓글 조회
+    /* -------------------------------
+       댓글 조회
+    ------------------------------- */
     const fetchComments = useCallback(async () => {
         try {
             const res = await postCommentAPI.getCommentsByPostId(postId, {
@@ -72,7 +76,9 @@ export default function PostDetail({ postId }) {
         }
     }, [postId]);
 
-    // 조회수 증가
+    /* -------------------------------
+       조회수 증가
+    ------------------------------- */
     useEffect(() => {
         if (!postId) return;
 
@@ -89,7 +95,9 @@ export default function PostDetail({ postId }) {
         updateViewCount();
     }, [postId]);
 
-    // 최초 로딩
+    /* -------------------------------
+       최초 로딩
+    ------------------------------- */
     useEffect(() => {
         if (postId) {
             fetchPostDetail();
@@ -100,7 +108,9 @@ export default function PostDetail({ postId }) {
     if (loading) return <Typography sx={{ mt: 5 }}>로딩 중...</Typography>;
     if (!post) return <Typography sx={{ mt: 5 }}>게시글을 불러올 수 없습니다.</Typography>;
 
-    // 파일 다운로드 (fetch)
+    /* -------------------------------
+       파일 다운로드
+    ------------------------------- */
     const handleDownload = async (file) => {
         try {
             const response = await fetch(`/api/attachmentFiles/download/${file.fileId}`, {
@@ -125,32 +135,30 @@ export default function PostDetail({ postId }) {
     /* -------------------------------
        게시글 + 첨부파일 수정 저장
     ------------------------------- */
-const handleSaveEdit = async () => {
-    try {
-        const formData = new FormData();
-        formData.append("title", editTitle);
-        formData.append("content", editContent);
-        formData.append("isNotification", post.isNotification ?? false);
+    const handleSaveEdit = async () => {
+        try {
+            const formData = new FormData();
+            formData.append("title", editTitle);
+            formData.append("content", editContent);
+            formData.append("isNotification", post.isNotification ?? false);
 
-        // 삭제할 파일 ID들 추가
-        deletedFiles.forEach(id => formData.append("deleteFileIds", id));
+            deletedFiles.forEach(id => formData.append("deleteFileIds", id));
 
-        newFiles.forEach(file => {
-            formData.append("multipartFile", file);
-        });
+            newFiles.forEach(file => {
+                formData.append("multipartFile", file);
+            });
 
-        await postAPI.updatePost(postId, formData);
+            await postAPI.updatePost(postId, formData);
 
-        setIsEditing(false);
-        setDeletedFiles([]);
-        setNewFiles([]);
+            setIsEditing(false);
+            setDeletedFiles([]);
+            setNewFiles([]);
 
-        fetchPostDetail();
-    } catch (err) {
-        console.error("게시글 수정 실패:", err);
-    }
-};
-
+            fetchPostDetail();
+        } catch (err) {
+            console.error("게시글 수정 실패:", err);
+        }
+    };
 
     /* -------------------------------
        게시글 삭제
@@ -171,13 +179,11 @@ const handleSaveEdit = async () => {
 
     return (
         <Box sx={{ mt: 3 }}>
-            {/* 게시글 상세 */}
             <Paper sx={{ p: 4, borderRadius: 4 }}>
 
                 {/* 수정 모드 */}
                 {isEditing ? (
                     <>
-                        {/* 제목 */}
                         <TextField
                             fullWidth
                             value={editTitle}
@@ -185,7 +191,6 @@ const handleSaveEdit = async () => {
                             sx={{ mb: 2 }}
                         />
 
-                        {/* 내용 */}
                         <TextField
                             fullWidth
                             multiline
@@ -251,7 +256,6 @@ const handleSaveEdit = async () => {
                             />
                         </Box>
 
-                        {/* 버튼 */}
                         <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
                             <Button variant="contained" onClick={handleSaveEdit}>
                                 저장
@@ -272,12 +276,10 @@ const handleSaveEdit = async () => {
                     </>
                 ) : (
                     <>
-                        {/* 제목 */}
                         <Typography variant="h3" sx={{ fontWeight: 700, mb: 3 }}>
                             {post.title}
                         </Typography>
 
-                        {/* 작성자 · 날짜 · 조회수 */}
                         <Stack direction="row" spacing={3} sx={{ mb: 3, fontSize: '14px', opacity: 0.8 }}>
                             <Typography>작성자: {post.employeeName}</Typography>
                             <Typography>작성일: {formatDate(post.createdAt)}</Typography>
@@ -286,7 +288,6 @@ const handleSaveEdit = async () => {
 
                         <Divider sx={{ my: 3 }} />
 
-                        {/* 내용 */}
                         <Typography
                             variant="body1"
                             sx={{
@@ -298,29 +299,17 @@ const handleSaveEdit = async () => {
                             {post.content}
                         </Typography>
 
-                        {/* 첨부파일 */}
-                        {post.attachmentFiles && post.attachmentFiles.length > 0 && (
+                        {/* 메일 첨부파일 UI 적용된 버전 */}
+                        {post.attachmentFiles?.length > 0 && (
                             <Box sx={{ mt: 4 }}>
                                 <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-                                    첨부파일
+                                    
                                 </Typography>
 
-                                <Stack spacing={1}>
-                                    {post.attachmentFiles.map((file) => (
-                                        <Button
-                                            key={file.fileId}
-                                            variant="outlined"
-                                            sx={{ justifyContent: 'flex-start' }}
-                                            onClick={() => handleDownload(file)}
-                                        >
-                                            {file.originalName} ({Math.round(file.size / 1024)} KB)
-                                        </Button>
-                                    ))}
-                                </Stack>
+                                <AttachmentListView attachments={post.attachmentFiles} />
                             </Box>
                         )}
 
-                        {/* 수정 / 삭제 */}
                         {post.employeeId === loginEmployeeId && (
                             <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
                                 <Button
@@ -343,7 +332,6 @@ const handleSaveEdit = async () => {
                 )}
             </Paper>
 
-            {/* 댓글 */}
             <Paper sx={{ p: 4, mt: 3, borderRadius: 4 }}>
                 <PostCommentForm
                     postId={post.postId}
@@ -358,7 +346,6 @@ const handleSaveEdit = async () => {
                 />
             </Paper>
 
-            {/* 삭제 모달 */}
             <Dialog
                 open={openDeleteConfirm}
                 onClose={() => setOpenDeleteConfirm(false)}
