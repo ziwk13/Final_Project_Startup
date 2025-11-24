@@ -98,7 +98,7 @@ const NotificationList = forwardRef(({ refreshKey, onCountChange, onTotalCountCh
     const handleItemDelete = (deletedItemId) => {
       
       const updateNotifications = notifications.filter(
-        (item) => item.notification !== deletedItemId
+        (item) => item.notificationId !== deletedItemId
       );
       setNotifications(updateNotifications);
 
