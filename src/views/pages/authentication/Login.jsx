@@ -21,11 +21,7 @@ import { APP_AUTH } from 'config';
 
 // A mapping of auth types to dynamic imports
 const authLoginImports = {
-  firebase: () => import('./firebase/AuthLogin'),
-  jwt: () => import('./jwt/AuthLogin'),
-  aws: () => import('./aws/AuthLogin'),
-  auth0: () => import('./auth0/AuthLogin'),
-  supabase: () => import('./supabase/AuthLogin')
+  jwt: () => import('./jwt/AuthLogin')
 };
 
 // ================================|| AUTH3 - LOGIN ||================================ //
@@ -59,9 +55,7 @@ export default function Login() {
             <AuthCardWrapper>
               <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
                 <Box sx={{ mb: 3 }}>
-                  <Link to="#" aria-label="logo">
-                    <Logo />
-                  </Link>
+                  <Logo />
                 </Box>
                 <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                 </Stack>
