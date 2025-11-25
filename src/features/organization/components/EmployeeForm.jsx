@@ -14,7 +14,7 @@ import SecurityTwoToneIcon from '@mui/icons-material/SecurityTwoTone';
 import FingerprintTwoToneIcon from '@mui/icons-material/FingerprintTwoTone';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
-import {getImageUrl} from 'api/getImageUrl';
+import { getImageUrl } from 'api/getImageUrl';
 import DefaultAvatar from 'assets/images/profile/default_profile.png';
 
 
@@ -51,6 +51,8 @@ function EmployeeForm({ formData, setFormData, commonCodes, selectedDeptInfo, re
     );
   }
 
+  const isNew = !formData.employeeId;
+
   // 2. 폼 이벤트 핸들러
   // (1) 일반 TextField 변경 핸들러
   const handleChange = (e) => {
@@ -61,7 +63,26 @@ function EmployeeForm({ formData, setFormData, commonCodes, selectedDeptInfo, re
     }));
   };
 
-  // (2) Autocomplete 변경 핸들러
+  // (2) 연락처 변경 핸들러
+  const handlePhoneNumberChange = (e) => {
+    const rawValue = e.target.value;
+    const cleaned = rawValue.replace(/[^\d]/g, '').slice(0, 11);
+    const length = cleaned.length;
+
+    let formattedValue = cleaned;
+    if (length > 3 && length <= 7) {
+      formattedValue = `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`;
+    } else if (length > 7) {
+      formattedValue = `${cleaned.slice(0, 3)}-${cleaned.slice(3, 7)}-${cleaned.slice(7)}`;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      phoneNumber: formattedValue
+    }));
+  };
+
+  // (3) Autocomplete 변경 핸들러
   const handleAutocompleteChange = (name, newValue) => {
     setFormData((prev) => ({
       ...prev,
@@ -69,12 +90,10 @@ function EmployeeForm({ formData, setFormData, commonCodes, selectedDeptInfo, re
     }));
   };
 
-  // (3) Autocomplete 렌더링을 위한 값 찾기
+  // (4) Autocomplete 렌더링을 위한 값 찾기
   const findValue = (list, id) => {
     return list.find((item) => item.commonCodeId === id) || null;
   };
-
-  const isNew = !formData.employeeId;
 
   // 3. 렌더링
   return (
@@ -144,16 +163,28 @@ function EmployeeForm({ formData, setFormData, commonCodes, selectedDeptInfo, re
               </ListItem>
               <Divider />
 
-              {/* 이름 (수정불가)*/}
+              {/* 이름 */}
               <ListItem sx={{ px: 0 }}>
                 {' '}
                 <ListItemIcon>
-                  <BusinessTwoToneIcon sx={{ fontSize: '1.3rem' }} />
+                  <AccountCircleTwoToneIcon sx={{ fontSize: '1.3rem' }} />
                 </ListItemIcon>
                 <ListItemText primary={<Typography sx={{ fontSize: 14 }}>이름</Typography>} />
-                <Typography sx={{ fontSize: 14 }} align="right">
-                  {formData.name || ''}
-                </Typography>
+                {isNew ? (
+                  <TextField
+                    variant="standard"
+                    name="name"
+                    value={formData.name || ''}
+                    onChange={handleChange}
+                    sx={{ marginLeft: 'auto' }}
+                    inputProps={{ style: { textAlign: 'right' } }}
+                    placeholder="이름 입력"
+                  />
+                ) : (
+                  <Typography sx={{ fontSize: 14 }} align="right">
+                    {formData.name || ''}
+                  </Typography>
+                )}
               </ListItem>
               <Divider />
 
@@ -212,9 +243,10 @@ function EmployeeForm({ formData, setFormData, commonCodes, selectedDeptInfo, re
                   variant="standard"
                   name="phoneNumber"
                   value={formData.phoneNumber || ''}
-                  onChange={handleChange}
+                  onChange={handlePhoneNumberChange}
                   sx={{ marginLeft: 'auto' }}
                   inputProps={{ style: { textAlign: 'right' } }}
+                  placeholder="010-0000-0000"
                 />
               </ListItem>
               <Divider />
