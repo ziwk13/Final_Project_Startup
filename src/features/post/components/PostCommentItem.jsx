@@ -1,8 +1,9 @@
-import { Box, Button, Typography, Stack, TextField } from "@mui/material";
+import { Box, Button, Typography, Stack, TextField, IconButton, Menu, MenuItem } from "@mui/material";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import postCommentAPI from "../api/postCommentAPI";
 import { useState } from "react";
 
-// 댓글 작성 일시
+// 날짜 포맷
 const formatDateTime = (datetime) => {
   if (!datetime) return "";
   const date = new Date(datetime);
@@ -17,9 +18,15 @@ const formatDateTime = (datetime) => {
 
 export default function PostCommentItem({ comment, loginEmployeeId, refresh }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(comment.content); // 수정할떄 나오는 창
+  const [editContent, setEditContent] = useState(comment.content);
 
-  // 댓글 수정 함수
+  // 메뉴(anchor)
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+
+  // 댓글 수정
   const handleUpdate = async () => {
     try {
       await postCommentAPI.updateComment(comment.commentId, {
@@ -30,9 +37,9 @@ export default function PostCommentItem({ comment, loginEmployeeId, refresh }) {
     } catch (err) {
       console.error(err);
     }
-  }
+  };
 
-  // 댓글 삭제 함수
+  // 댓글 삭제
   const handleDelete = async () => {
     try {
       await postCommentAPI.deleteComment(comment.commentId);
@@ -43,21 +50,72 @@ export default function PostCommentItem({ comment, loginEmployeeId, refresh }) {
   };
 
   return (
-    <Box sx={{ p: 2, borderBottom: "primary" }}>
-
-      {/* 댓글 작성자 + 날짜/시간 우측 정렬 추가 */}
-      <Stack direction="row" justifyContent="space-between">
+    <Box sx={{ p: 2, borderBottom: "1px solid #eee" }}>
+      
+      {/* 작성자 + 더보기 메뉴 */}
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Typography sx={{ fontWeight: 600 }}>
           {comment.employeename}
         </Typography>
 
-        {/* 날짜/시간 */}
-        <Typography sx={{ fontSize: "0.75rem", color: "gray" }}>
-          {formatDateTime(comment.createdAt)}
-        </Typography>
+        {/* 본인일 때만 점 메뉴 */}
+        {comment.employeeId === loginEmployeeId && (
+          <>
+            <IconButton size="small" onClick={handleMenuOpen}>
+              <MoreVertIcon fontSize="small" />
+            </IconButton>
+
+            {/* 여기서는 절대 Fragment 사용 불가!! */}
+            <Menu anchorEl={anchorEl} open={open} onClose={handleMenuClose}>
+              {!isEditing && (
+                <MenuItem
+                  onClick={() => {
+                    setIsEditing(true);
+                    handleMenuClose();
+                  }}
+                >
+                  수정
+                </MenuItem>
+              )}
+
+              {!isEditing && (
+                <MenuItem
+                  onClick={() => {
+                    handleDelete();
+                    handleMenuClose();
+                  }}
+                >
+                  삭제
+                </MenuItem>
+              )}
+
+              {isEditing && (
+                <MenuItem
+                  onClick={() => {
+                    handleUpdate();
+                    handleMenuClose();
+                  }}
+                >
+                  완료
+                </MenuItem>
+              )}
+
+              {isEditing && (
+                <MenuItem
+                  onClick={() => {
+                    setIsEditing(false);
+                    handleMenuClose();
+                  }}
+                >
+                  취소
+                </MenuItem>
+              )}
+            </Menu>
+          </>
+        )}
       </Stack>
 
-      {/* 내용 or 수정창 */}
+      {/* 댓글 내용 or 수정창 */}
       {!isEditing ? (
         <Typography sx={{ mt: 1 }}>{comment.content}</Typography>
       ) : (
@@ -69,31 +127,12 @@ export default function PostCommentItem({ comment, loginEmployeeId, refresh }) {
         />
       )}
 
-      {/* 본인일 때만 버튼 노출 */}
-      {comment.employeeId === loginEmployeeId && (
-        <Stack direction="row" sx={{ mt: 1 }} spacing={1}>
-          {!isEditing ? (
-            <>
-              <Button size="small" color="primary" onClick={() => setIsEditing(true)}>
-                수정
-              </Button>
-              <Button size="small" color="error" onClick={handleDelete}>
-                삭제
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button size="small" color="primary" onClick={handleUpdate}>
-                완료
-              </Button>
-              <Button size="small" color="secondary" onClick={() => setIsEditing(false)}>
-                취소
-              </Button>
-            </>
-          )}
-        </Stack>
-      )}
-
+      {/* 작성 시간 (오른쪽 아래 정렬) */}
+      <Stack direction="row" justifyContent="flex-end">
+        <Typography sx={{ fontSize: "0.75rem", color: "gray", mt: 0.5 }}>
+          {formatDateTime(comment.createdAt)}
+        </Typography>
+      </Stack>
     </Box>
   );
 }

@@ -4,12 +4,54 @@ import { useNavigate } from 'react-router-dom';
 // material-ui
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
+import InputAdornment from '@mui/material/InputAdornment';
+import OutlinedInput from '@mui/material/OutlinedInput';
+import Stack from '@mui/material/Stack';
+
+// Avatar
+import Avatar from 'ui-component/extended/Avatar';
+
+import { IconSearch } from '@tabler/icons-react';
+import DefaultAvatar from 'assets/images/profile/default_profile.png';
+import { getImageUrl } from 'api/getImageUrl';
 
 import CommonDataGrid from 'features/list/components/CommonDataGrid';
 import { gridSpacing } from 'store/constant';
 import MainCard from 'ui-component/cards/MainCard';
 import postAPI from '../api/postAPI';
 import GridPaginationActions from '../../list/components/GridPaginationActions';
+
+// 작성자 UI 
+const renderUserStack = (user) => {
+  if (!user) {
+    return (
+      <Stack direction="row" sx={{ alignItems: 'center', gap: 1.5 }}>
+        <Avatar alt="Unknown User" src={DefaultAvatar} />
+        <Stack>
+          <Typography variant="subtitle1">정보 없음</Typography>
+          <Typography variant="subtitle2" noWrap>-</Typography>
+        </Stack>
+      </Stack>
+    );
+  }
+
+  return (
+    <Stack direction="row" sx={{ alignItems: 'center', gap: 1.5 }}>
+      <Avatar
+        alt={user.name}
+        src={user.profileImg ? getImageUrl(user.profileImg) : DefaultAvatar}
+      />
+      <Stack>
+        <Typography variant="subtitle1">
+          {`${user.name} (${user.position || user.department || '-'})`}
+        </Typography>
+        <Typography variant="subtitle2" noWrap>
+          {user.email}
+        </Typography>
+      </Stack>
+    </Stack>
+  );
+};
 
 export default function PostList({ category }) {
   const navigate = useNavigate();
@@ -29,7 +71,7 @@ export default function PostList({ category }) {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // 검색어 상태
+  // 검색어
   const [keyword, setKeyword] = useState('');
 
   // 카테고리 바뀌면 페이지 초기화
@@ -37,7 +79,7 @@ export default function PostList({ category }) {
     setPage(1);
   }, [category]);
 
-  // 목록 API 호출
+  // 게시글 목록 API 호출
   useEffect(() => {
     const fetchPostList = async () => {
       setLoading(true);
@@ -65,12 +107,19 @@ export default function PostList({ category }) {
           size
         });
 
+        // DTO 구조에 맞게 employee 객체 가공
         const processed = content.map((row) => ({
           id: row.postId,
           postId: row.postId,
           title: row.title,
           createdAt: row.createdAt?.split('T')[0] ?? '',
-          employeeName: row.employeeName
+          employee: {
+            name: row.employeeName,
+            email: row.email,
+            profileImg: row.profileImg,
+            department: row.department,
+            position: row.position
+          }
         }));
 
         setRows(processed);
@@ -85,12 +134,12 @@ export default function PostList({ category }) {
     fetchPostList();
   }, [category, page, rowsPerPage, keyword]);
 
-  // 테이블 컬럼
+  // DataGrid 컬럼
   const columns = useMemo(
     () => [
       {
         field: 'postId',
-        headerName: '번호',
+        headerName: '#',
         width: 90,
         align: 'center',
         headerAlign: 'center',
@@ -112,15 +161,14 @@ export default function PostList({ category }) {
         sortable: false
       },
       {
-        field: 'employeeName',
+        field: 'employee',
         headerName: '작성자',
-        width: 140,
-        align: 'center',
-        headerAlign: 'center',
-        sortable: false
+        width: 300,
+        sortable: false,
+        renderCell: (params) => renderUserStack(params.value)
       }
     ],
-    [navigate]
+    []
   );
 
   const handlePageChange = (event, newPage) => {
@@ -149,22 +197,26 @@ export default function PostList({ category }) {
         >
           {/* 왼쪽: 타이틀 + 검색창 */}
           <Grid item sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="h3">게시글 목록</Typography>
+            <Typography variant="h3">목록</Typography>
 
             {/* 검색창 */}
-            <input
-              type="text"
-              placeholder="검색어 입력"
+            <OutlinedInput
               value={keyword}
               onChange={(e) => {
                 setKeyword(e.target.value);
-                setPage(1); // 검색어 바뀌면 1페이지로 이동
+                setPage(1);
               }}
-              style={{
-                padding: '6px 10px',
-                borderRadius: '6px',
-                border: '1px solid #ccc',
-                marginLeft: '12px'
+              placeholder="제목과 내용을 입력해주세요."
+              startAdornment={
+                <InputAdornment position="start">
+                  <IconSearch size="18px" stroke={1.5} />
+                </InputAdornment>
+              }
+              sx={{
+                height: '36px',
+                width: '250px',
+                ml: 2,
+                fontSize: '0.875rem'
               }}
             />
           </Grid>

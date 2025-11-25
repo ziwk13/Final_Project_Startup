@@ -32,7 +32,7 @@ export const createPost = async (commonCodeCode, formData) => {
 
 // 4. 게시글 수정
 export const updatePost = async (postId, formData) => {
-    const response = await API.put(`/${postId}`, formData);
+    const response = await API.put(`/${postId}`, formData, {"Content-Type": "multipart/form-data"});
     return response.data.data;
 };
 

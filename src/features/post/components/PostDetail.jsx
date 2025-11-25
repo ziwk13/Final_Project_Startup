@@ -43,9 +43,7 @@ export default function PostDetail({ postId }) {
     // 게시글 삭제 모달
     const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
 
-    /* -------------------------------
-       게시글 상세 조회
-    ------------------------------- */
+    // 게시글 상세 조회
     const fetchPostDetail = useCallback(async () => {
         try {
             const data = await postAPI.detailPost(postId);
@@ -61,9 +59,7 @@ export default function PostDetail({ postId }) {
         }
     }, [postId]);
 
-    /* -------------------------------
-       댓글 조회
-    ------------------------------- */
+    // 댓글 조회
     const fetchComments = useCallback(async () => {
         try {
             const res = await postCommentAPI.getCommentsByPostId(postId, {
@@ -76,9 +72,7 @@ export default function PostDetail({ postId }) {
         }
     }, [postId]);
 
-    /* -------------------------------
-       조회수 증가
-    ------------------------------- */
+    // 조회수 증가
     useEffect(() => {
         if (!postId) return;
 
@@ -95,9 +89,7 @@ export default function PostDetail({ postId }) {
         updateViewCount();
     }, [postId]);
 
-    /* -------------------------------
-       최초 로딩
-    ------------------------------- */
+    // 최초 로딩
     useEffect(() => {
         if (postId) {
             fetchPostDetail();
@@ -108,9 +100,7 @@ export default function PostDetail({ postId }) {
     if (loading) return <Typography sx={{ mt: 5 }}>로딩 중...</Typography>;
     if (!post) return <Typography sx={{ mt: 5 }}>게시글을 불러올 수 없습니다.</Typography>;
 
-    /* -------------------------------
-       파일 다운로드
-    ------------------------------- */
+    // 파일 다운로드
     const handleDownload = async (file) => {
         try {
             const response = await fetch(`/api/attachmentFiles/download/${file.fileId}`, {
@@ -132,9 +122,8 @@ export default function PostDetail({ postId }) {
         }
     };
 
-    /* -------------------------------
-       게시글 + 첨부파일 수정 저장
-    ------------------------------- */
+    // 게시글, 첨부파일 수정 저장
+
     const handleSaveEdit = async () => {
         try {
             const formData = new FormData();
@@ -148,7 +137,7 @@ export default function PostDetail({ postId }) {
                 formData.append("multipartFile", file);
             });
 
-            await postAPI.updatePost(postId, formData);
+            await postAPI.updatePost(postId, formData, { "Content-Type": "multipart/form-data" });
 
             setIsEditing(false);
             setDeletedFiles([]);
@@ -217,7 +206,7 @@ export default function PostDetail({ postId }) {
                                         direction="row"
                                         spacing={2}
                                         alignItems="center"
-                                        sx={{ p: 1, border: '1px solid #ddd', borderRadius: 2 }}
+                                        sx={{ p: 1, border: '1px solid', borderRadius: 2 }}
                                     >
                                         <Typography sx={{ flex: 1 }}>
                                             {file.originalName} ({Math.round(file.size / 1024)} KB)
@@ -303,7 +292,7 @@ export default function PostDetail({ postId }) {
                         {post.attachmentFiles?.length > 0 && (
                             <Box sx={{ mt: 4 }}>
                                 <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-                                    
+
                                 </Typography>
 
                                 <AttachmentListView attachments={post.attachmentFiles} />
