@@ -12,7 +12,8 @@ import {
   IconFileCheck,
   IconClipboardCheck,
   IconCalendar,
-  IconCode
+  IconCode,
+  IconLayoutBoard
 } from '@tabler/icons-react';
 
 import IconBadge from '@mui/icons-material/Badge';
@@ -34,7 +35,8 @@ const icons = {
   IconCalendar,
   IconBadge,
   IconCode,
-  CoPresentIcon
+  CoPresentIcon,
+  IconLayoutBoard
 };
 
 /**
