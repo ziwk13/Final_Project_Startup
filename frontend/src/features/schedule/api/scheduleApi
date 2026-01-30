@@ -1,0 +1,133 @@
+// ==============================|| scheduleSlice.js ||============================== //
+
+import { createSlice } from '@reduxjs/toolkit';
+import axios from 'api/axios';
+import { dispatch } from 'store';
+
+const initialState = {
+  error: null,
+  events: [],
+  loading: false
+};
+
+const slice = createSlice({
+  name: 'schedule',
+  initialState,
+  reducers: {
+    startLoading(state) {
+      state.loading = true;
+    },
+    hasError(state, action) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    getEventsSuccess(state, action) {
+      state.loading = false;
+      state.events = action.payload || [];
+    },
+    addEventSuccess(state, action) {
+      state.loading = false;
+      state.events.push(action.payload);
+    },
+    updateEventSuccess(state, action) {
+      const updated = action.payload;
+      state.loading = false;
+      state.events = state.events.map((e) => {
+        if (e.scheduleId !== updated.scheduleId) return e;
+        return {
+          ...e,
+          ...updated,
+          content: updated.content ?? e.content,
+          categoryCode: updated.categoryCode ?? e.categoryCode,
+          colorCode: updated.colorCode ?? e.colorCode,
+          allDay: updated.allDay ?? e.allDay
+        };
+      });
+    }
+  }
+});
+
+export default slice.reducer;
+
+// ------------------------------ ACTIONS ------------------------------ //
+
+// 전체 일정 조회
+export const getEvents = (employeeId) => async (dispatch) => {
+  try {
+    dispatch(slice.actions.startLoading());
+    const res = await axios.get(`/api/schedules/visible/${employeeId}`, { withCredentials: true });
+    const data = res.data?.data || res.data;
+    dispatch(slice.actions.getEventsSuccess(data));
+  } catch (error) {
+    dispatch(slice.actions.hasError(error));
+  }
+};
+
+// 일정 등록
+export const addEvent = (eventData) => async () => {
+  try {
+    dispatch(slice.actions.startLoading());
+    const res = await axios.post('/api/schedules', eventData, { withCredentials: true });
+    const created = res.data?.data || res.data;
+    dispatch(slice.actions.addEventSuccess(created));
+    return created;
+  } catch (error) {
+    dispatch(slice.actions.hasError(error));
+    throw error;
+  }
+};
+
+// 일정 수정
+export const updateEvent = (scheduleId, updatedData) => async (dispatch, getState) => {
+  try {
+    dispatch(slice.actions.startLoading());
+    const state = getState();
+    const prev = state.schedule.events.find((e) => e.scheduleId === scheduleId) || {};
+    const res = await axios.put(`/api/schedules/${scheduleId}`, updatedData, { withCredentials: true });
+    const server = res.data?.data || {};
+    const merged = { ...prev, ...updatedData, ...server, scheduleId: scheduleId };
+    dispatch(slice.actions.updateEventSuccess(merged));
+  } catch (error) {
+    dispatch(slice.actions.hasError(error));
+  }
+};
+
+// 일정 삭제
+export const deleteEvent = (scheduleId) => async (dispatch, getState) => {
+  try {
+    await axios.delete(`/api/schedules/${scheduleId}`, { withCredentials: true });
+
+    const state = getState();
+    const updatedEvents = state.schedule.events.filter((e) => e.scheduleId !== scheduleId);
+    dispatch(slice.actions.getEventsSuccess(updatedEvents));
+  } catch (error) {
+    dispatch(slice.actions.hasError(error));
+  }
+};
+
+// 참여자 초대
+export const inviteParticipants = (scheduleId, employeeIds) => async () => {
+  try {
+    await axios.post(`/api/schedules/${scheduleId}/participants`, employeeIds, { withCredentials: true });
+    return true;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 참여자 상태 변경
+export const updateParticipantStatus = (schdeuleId, employeeId, value1) => async (dispatch) => {
+  try {
+    await axios.put(`/api/schedules/${schdeuleId}/participants/${employeeId}`, null, {
+      params: { value1 },
+      withCredentials: true
+    });
+
+    await dispatch(getEvents(employeeId));
+
+    return true;
+  } catch (error) {
+    dispatch(slice.actions.hasError(error));
+    throw error;
+  }
+};

@@ -1,0 +1,171 @@
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'api/axios';
+
+// ===============================
+// 오늘 근태 조회
+// ===============================
+export const fetchTodayAttendance = createAsyncThunk('attendance/fetchTodayAttendance', async (employeeId, { rejectWithValue }) => {
+  try {
+    const response = await axios.get(`/api/attendances/today/${employeeId}`);
+    return response.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || '오늘 근태 조회 실패');
+  }
+});
+
+// ===============================
+// 출근
+// ===============================
+export const clockIn = createAsyncThunk('attendance/clockIn', async (employeeId, { rejectWithValue }) => {
+  try {
+    const response = await axios.post(`/api/attendances/clock-in/${employeeId}`);
+    return response.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || '출근 실패');
+  }
+});
+
+// ===============================
+// 퇴근
+// ===============================
+export const clockOut = createAsyncThunk('attendance/clockOut', async (employeeId, { rejectWithValue }) => {
+  try {
+    const response = await axios.post(`/api/attendances/clock-out/${employeeId}`);
+    return response.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || '퇴근 실패');
+  }
+});
+
+// ===============================
+// 근무 상태 변경
+// ===============================
+export const updateWorkStatus = createAsyncThunk('attendance/updateWorkStatus', async ({ employeeId, statusCode }, { rejectWithValue }) => {
+  try {
+    const response = await axios.put(`/api/attendances/${employeeId}/${statusCode}`);
+    return response.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || '근무 상태 변경 실패');
+  }
+});
+
+// ===============================
+// 이번 주 근태 조회 (ProgressBar)
+// ===============================
+export const fetchThisWeekAttendance = createAsyncThunk('attendance/fetchThisWeekAttendance', async (employeeId, { rejectWithValue }) => {
+  try {
+    const response = await axios.get(`/api/attendances/weekly/${employeeId}`);
+    return response.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || '이번 주 근태 조회 실패');
+  }
+});
+
+// ===============================
+// 선택 주차 근태 조회
+// ===============================
+export const fetchSelectedWeekAttendance = createAsyncThunk(
+  'attendance/fetchSelectedWeekAttendance',
+  async ({ employeeId, weekStart }, { rejectWithValue }) => {
+    try {
+      const params = weekStart ? { weekStart } : {};
+      const response = await axios.get(`/api/attendances/weekly/${employeeId}`, { params });
+      return response.data.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || '선택 주 근태 조회 실패');
+    }
+  }
+);
+
+// ===============================
+// 결근 조회
+// ===============================
+export const fetchAbsentDays = createAsyncThunk('attendance/fetchAbsentDays', async ({ employeeId, year, month }, { rejectWithValue }) => {
+  try {
+    const response = await axios.get(`/api/attendances/${employeeId}/absent`, {
+      params: { year, month }
+    });
+    return response.data.data.absentDays;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || '결근 정보 조회 실패');
+  }
+});
+
+// ===============================
+// 공휴일 조회
+// ===============================
+export const fetchHolidays = createAsyncThunk('attendance/fetchHolidays', async ({ year, month }, { rejectWithValue }) => {
+  try {
+    const response = await axios.get(`/api/schedules/holidays`, {
+      params: { year, month }
+    });
+    return response.data.data; // API가 Array<HashMap>
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || '공휴일 조회 실패');
+  }
+});
+
+// ===============================
+// Slice
+// ===============================
+const attendanceSlice = createSlice({
+  name: 'attendance',
+  initialState: {
+    today: null,
+    thisWeek: { records: [], totalMinutes: 0, targetMinutes: 2400 },
+    selectedWeek: { records: [], totalMinutes: 0, targetMinutes: 2400 },
+    absentDays: [],
+    holidays: [],
+    loading: false,
+    error: null,
+    lastUpdated: 0
+  },
+  reducers: {
+    resetAttendanceState: (state) => {
+      state.today = null;
+      state.thisWeek = null;
+      state.selectedWeek = null;
+      state.absentDays = [];
+      state.holidays = [];
+      state.loading = false;
+      state.error = null;
+    }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchTodayAttendance.fulfilled, (state, action) => {
+        state.today = action.payload;
+      })
+      .addCase(clockIn.fulfilled, (state, action) => {
+        state.today = action.payload;
+        state.lastUpdated = Date.now();
+      })
+      .addCase(clockOut.fulfilled, (state, action) => {
+        state.today = action.payload;
+        state.lastUpdated = Date.now();
+      })
+      .addCase(updateWorkStatus.fulfilled, (state, action) => {
+        const newStatus = typeof action.payload === 'string' ? action.payload : action.payload?.workStatus;
+
+        if (state.today) state.today.workStatus = newStatus;
+        else state.today = { workStatus: newStatus };
+
+        state.lastUpdated = Date.now();
+      })
+      .addCase(fetchThisWeekAttendance.fulfilled, (state, action) => {
+        state.thisWeek = action.payload;
+      })
+      .addCase(fetchSelectedWeekAttendance.fulfilled, (state, action) => {
+        state.selectedWeek = action.payload;
+      })
+      .addCase(fetchAbsentDays.fulfilled, (state, action) => {
+        state.absentDays = action.payload;
+      })
+      .addCase(fetchHolidays.fulfilled, (state, action) => {
+        state.holidays = action.payload;
+      });
+  }
+});
+
+export const { resetAttendanceState } = attendanceSlice.actions;
+export default attendanceSlice.reducer;

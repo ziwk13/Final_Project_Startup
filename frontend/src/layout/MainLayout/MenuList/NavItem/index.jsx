@@ -56,7 +56,15 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
 
   const Icon = item?.icon;
   const itemIcon = item?.icon ? (
-    <Icon stroke={1.5} size={drawerOpen ? '20px' : '24px'} style={{ ...(isHorizontal && isParents && { fontSize: 20, stroke: '1.5' }) }} />
+    item.id === 'attendance' ? ( // 근태관리 아이콘만 작게 표시
+      <Icon fontSize="small" />
+    ) : (
+      <Icon
+        stroke={1.5}
+        size={drawerOpen ? '20px' : '24px'}
+        style={{ ...(isHorizontal && isParents && { fontSize: 20, stroke: '1.5' }) }}
+      />
+    )
   ) : (
     <FiberManualRecordIcon sx={{ width: isSelected ? 8 : 6, height: isSelected ? 8 : 6 }} fontSize={level > 0 ? 'inherit' : 'medium'} />
   );
@@ -140,7 +148,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
           </ButtonBase>
 
           {(drawerOpen || (!drawerOpen && level !== 1)) && (
-            <Tooltip title={<FormattedMessage id={item.title} />} disableHoverListener={!hoverStatus}>
+            <Tooltip title={item.title} disableHoverListener={!hoverStatus}>
               <ListItemText
                 primary={
                   <Typography
@@ -155,7 +163,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
                       ...(themeDirection === ThemeDirection.RTL && { textAlign: 'end', direction: 'rtl' })
                     }}
                   >
-                    <FormattedMessage id={item.title} />
+                    {item.title}
                   </Typography>
                 }
                 secondary={
@@ -172,7 +180,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
                         lineHeight: 1.66
                       }}
                     >
-                      <FormattedMessage id={item.caption} />
+                      {item.caption}
                     </Typography>
                   )
                 }
@@ -221,7 +229,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
             sx={{ mb: 0.25 }}
             primary={
               <Typography variant={isSelected ? 'h5' : 'body1'} sx={{ color: 'inherit' }}>
-                <FormattedMessage id={item.title} />
+                {item.title}
               </Typography>
             }
             secondary={

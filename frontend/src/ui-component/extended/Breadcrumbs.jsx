@@ -16,8 +16,8 @@ import { FormattedMessage } from 'react-intl';
 
 // project imports
 import { ThemeDirection } from 'config';
-import navigation from 'menu-items';
 import useConfig from 'hooks/useConfig';
+import { useMenu } from 'contexts/MenuContext';
 
 // assets
 import { IconChevronRight, IconTallymark1 } from '@tabler/icons-react';
@@ -31,7 +31,7 @@ function BTitle({ title }) {
   return (
     <Grid>
       <Typography variant="h4" sx={{ fontWeight: 500 }}>
-        <FormattedMessage id={title} />
+        {title}
       </Typography>
     </Grid>
   );
@@ -59,6 +59,10 @@ export default function Breadcrumbs({
     state: { themeDirection }
   } = useConfig();
 
+  // === MenuContext 사용 ===
+  const { menuItems } = useMenu();
+  const navigation = menuItems;
+
   const [main, setMain] = useState();
   const [item, setItem] = useState();
 
@@ -80,6 +84,33 @@ export default function Breadcrumbs({
   let customLocation = location.pathname;
 
   useEffect(() => {
+    if (!navigation || !navigation.items) {
+      return;
+    }
+
+    const getCollapse = (menu) => {
+      if (!custom && menu.children) {
+        menu.children.filter((collapse) => {
+          if (collapse.type && collapse.type === 'collapse') {
+            getCollapse(collapse);
+            if (collapse.url === customLocation) {
+              setMain(collapse);
+              setItem(collapse);
+            }
+          } else if (collapse.type && collapse.type === 'item') {
+            if (customLocation === collapse.url) {
+              setMain(menu);
+              setItem(collapse);
+            }
+          }
+          return false;
+        });
+      }
+    };
+    // 경로가 변경될 때마다 main과 item state를 초기화
+    setMain(undefined);
+    setItem(undefined);
+
     navigation?.items?.map((menu) => {
       if (menu.type && menu.type === 'group') {
         if (menu?.url && menu.url === customLocation) {
@@ -91,28 +122,8 @@ export default function Breadcrumbs({
       }
       return false;
     });
-  });
-
-  // set active item state
-  const getCollapse = (menu) => {
-    if (!custom && menu.children) {
-      menu.children.filter((collapse) => {
-        if (collapse.type && collapse.type === 'collapse') {
-          getCollapse(collapse);
-          if (collapse.url === customLocation) {
-            setMain(collapse);
-            setItem(collapse);
-          }
-        } else if (collapse.type && collapse.type === 'item') {
-          if (customLocation === collapse.url) {
-            setMain(menu);
-            setItem(collapse);
-          }
-        }
-        return false;
-      });
-    }
-  };
+    // customLocation (경로), custom prop, 또는 navigation 객체 자체가 변경될 때만 useEffect 실행
+  }, [customLocation, custom, navigation]);
 
   // item separator
   const SeparatorIcon = separator;
@@ -144,7 +155,7 @@ export default function Breadcrumbs({
         color={window.location.pathname === main.url ? 'text.primary' : 'text.secondary'}
       >
         {icons && <CollapseIcon style={{ ...iconSX, ...(themeDirection === ThemeDirection.RTL && { marginLeft: 6, marginRight: 0 }) }} />}
-        <FormattedMessage id={main.title} />
+        {main.title}
       </Typography>
     );
   }
@@ -204,7 +215,7 @@ export default function Breadcrumbs({
         }}
       >
         {icons && <ItemIcon style={{ ...iconSX, ...(themeDirection === ThemeDirection.RTL && { marginLeft: 6, marginRight: 0 }) }} />}
-        <FormattedMessage id={itemTitle} />
+        {itemTitle}
       </Typography>
     );
 

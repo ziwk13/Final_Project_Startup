@@ -1,4 +1,4 @@
-export const DASHBOARD_PATH = '/sample-page';
+export const DASHBOARD_PATH = '/attendance';
 export const HORIZONTAL_MAX_ITEM = 7;
 
 export const CSS_VAR_PREFIX = '';
@@ -43,15 +43,14 @@ export let DropzopType;
 })(DropzopType || (DropzopType = {}));
 
 export const APP_AUTH = AuthProvider.JWT;
-export const DEFAULT_THEME_MODE = ThemeMode.SYSTEM;
-
+export const DEFAULT_THEME_MODE = ThemeMode.LIGHT; // 밝은 테마 고정
 const config = {
   menuOrientation: MenuOrientation.VERTICAL,
   miniDrawer: false,
   fontFamily: `'Roboto', sans-serif`,
   borderRadius: 8,
   outlinedFilled: true,
-  presetColor: 'default',
+  presetColor: 'theme5',  // theme5로 고정
   i18n: 'en',
   themeDirection: ThemeDirection.LTR,
   container: true
