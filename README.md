@@ -2,8 +2,12 @@
 
 
 
-<img src="https://github.com/user-attachments/assets/fd211198-6bd7-4d53-9f72-abc2aea19922" width="15%"/> # [프로젝트 명: StartUp]
+<img src="https://github.com/user-attachments/assets/fd211198-6bd7-4d53-9f72-abc2aea19922" width="15%"/> 
+# [프로젝트 명: StartUp]
 > **한 줄 소개:** 기업의 효율적인 업무 처리를 위한 웹 기반 그룹웨어 서비스
+> 배포: https://goodee.kro.kr
+> 아이디: admin
+> 비밀번호: admin
 
 <a href="#"><img src="https://img.shields.io/badge/Java-ED8B00?style=flat-square&logo=openjdk&logoColor=white"/></a>
 <a href="#"><img src="https://img.shields.io/badge/Spring-6DB33F?style=flat-square&logo=spring&logoColor=white"/></a>
