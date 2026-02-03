@@ -3,10 +3,18 @@
 
 
 <img src="https://github.com/user-attachments/assets/fd211198-6bd7-4d53-9f72-abc2aea19922" width="15%"/> 
+
+<br/>
+
 # [프로젝트 명: StartUp]
+<br/>
+
 > **한 줄 소개:** 기업의 효율적인 업무 처리를 위한 웹 기반 그룹웨어 서비스
+> <br/>
 > 배포: https://goodee.kro.kr
+> <br/>
 > 아이디: admin
+> <br/>
 > 비밀번호: admin
 
 <a href="#"><img src="https://img.shields.io/badge/Java-ED8B00?style=flat-square&logo=openjdk&logoColor=white"/></a>
