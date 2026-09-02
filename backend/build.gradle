@@ -26,10 +26,6 @@ repositories {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-<<<<<<< HEAD:backend/build.gradle
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-=======
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
@@ -45,7 +41,6 @@ dependencies {
     // Swagger(OpenAPI) 추가
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
->>>>>>> backend_origin/develop:build.gradle
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'com.mysql:mysql-connector-j'
