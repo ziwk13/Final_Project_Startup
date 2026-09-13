@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 // material-ui
 import Button from '@mui/material/Button';
@@ -12,6 +12,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import InputLabel from '@mui/material/InputLabel';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 
 // third party
 import * as Yup from 'yup';
@@ -54,45 +55,31 @@ export default function JWTLogin({ ...others }) {
   return (
     <Formik
       initialValues={{
-<<<<<<< HEAD:frontend/src/views/pages/authentication/jwt/AuthLogin.jsx
-        email: 'info@codedthemes.com',
-        password: '123456',
-=======
-        username: rememberedUsername || '',
+        email: rememberedUsername || '',
         password: '',
->>>>>>> frontend_origin/develop:src/views/pages/authentication/jwt/AuthLogin.jsx
         submit: null
       }}
       validationSchema={Yup.object().shape({
-        email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
+        email: Yup.string().max(255).required('아이디는 필수입니다.'),
         password: Yup.string()
-<<<<<<< HEAD:frontend/src/views/pages/authentication/jwt/AuthLogin.jsx
-          .required('Password is required')
-          .test('no-leading-trailing-whitespace', 'Password can not start or end with spaces', (value) => value === value.trim())
-          .max(10, 'Password must be less than 10 characters')
-      })}
-      onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
-        try {
-          const trimmedEmail = values.email.trim();
-          await login?.(trimmedEmail, values.password);
-=======
           .required('비밀번호는 필수입니다.')
           .test('no-leading-trailing-whitespace', '비밀번호는 공백으로 시작하거나 끝날 수 없습니다.', (value) => value === value.trim())
           .max(20, '비밀번호는 20자 이하여야합니다.')
       })}
       onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
         try {
+          const trimmedEmail = values.email.trim();
+
           // 아이디 기억하기 체크 여부에 따라 localStorage 처리
           if (checked) {
             // 체크되어 있으면 localStorage에 사용자 이름 저장
-            localStorage.setItem('rememberedUsername', values.username.trim());
+            localStorage.setItem('rememberedUsername', trimmedEmail);
           } else {
             // 체크되어 있지 않으면 localStorage에서 사용자 이름 제거
             localStorage.removeItem('rememberedUsername');
           }
 
-          await login?.(values.username.trim(), values.password);
->>>>>>> frontend_origin/develop:src/views/pages/authentication/jwt/AuthLogin.jsx
+          await login?.(trimmedEmail, values.password);
 
           if (scriptedRef.current) {
             setStatus({ success: true });
@@ -193,11 +180,7 @@ export default function JWTLogin({ ...others }) {
           <Box sx={{ mt: 2 }}>
             <AnimateButton>
               <Button color="secondary" disabled={isSubmitting} fullWidth size="large" type="submit" variant="contained">
-<<<<<<< HEAD:frontend/src/views/pages/authentication/jwt/AuthLogin.jsx
-                Sign In
-=======
                 로그인
->>>>>>> frontend_origin/develop:src/views/pages/authentication/jwt/AuthLogin.jsx
               </Button>
             </AnimateButton>
           </Box>

@@ -27,7 +27,7 @@ public class Notification {
     private Long notificationId;
 
     @Comment("수신자 ID")
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     private Employee employee;
 
