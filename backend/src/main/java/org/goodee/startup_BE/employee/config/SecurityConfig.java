@@ -45,6 +45,8 @@ public class SecurityConfig {
             "/api/auth/login",
             "/api/auth/refresh",
 
+            "/ws/**",
+
             //스웨거 관련 경로 허용
             "/swagger-ui/**",
             "/v3/api-docs/**",
